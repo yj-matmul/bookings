@@ -32,6 +32,10 @@
       .notie-container {
         box-shadow: none;
       }
+
+      .datepicker {
+        z-index: 10000;
+      }
     </style>
 </head>
 <body>
@@ -77,19 +81,19 @@
 
                 <form action="reservation.html" method="GET" class="needs-validation" novalidate>
                     
-                    <div class="row" id="reservation-dates">
-                        <div class="col">
-                          <input required class="form-control" type="text" name="start" placeholder="Arrival Date">
-                        </div>
-                        <div class="col">
-                          <input required class="form-control" type="text" name="end" placeholder="Departure Date">  
-                        </div>
-                    </div>
+                  <div class="row" id="reservation-dates">
+                      <div class="col">
+                        <input required class="form-control" type="text" name="start" placeholder="Arrival Date">
+                      </div>
+                      <div class="col">
+                        <input required class="form-control" type="text" name="end" placeholder="Departure Date">  
+                      </div>
+                  </div>
 
-                    <hr>
+                  <hr>
 
-                    <button type="submit" class="btn btn-primary">Search Availability</button>
-                  </form>
+                  <button type="submit" class="btn btn-primary">Search Availability</button>
+                </form>
             </div>
         </div>
 
@@ -149,7 +153,19 @@
       })()
 
       document.getElementById("colorButton").addEventListener("click", function() {
-        attention.error({msg: "Hello world"});
+        let html = `
+          <form id="check-availability-form" action="" class="needs-valiation" method="POST" novalidate>
+            <div class="row" id="reservation-dates-modal">
+              <div class="col">
+                <input disabled required class="form-control" type="text" name="start" id="start" placeholder="Arrival Date">
+              </div>
+              <div class="col">
+                <input disabled required class="form-control" type="text" name="end" id="end" placeholder="Departure Date">
+              </div>
+            </div>
+          </form>
+        `
+        attention.custom({msg: html, title: "Choose your dates"});
       });
 
       const elem = document.getElementById("reservation-dates");
@@ -230,12 +246,48 @@
             text: msg,
             footer: footer
           })
+        };
+
+        async function custom(c) {
+          const {
+            msg = "",
+            title = "",
+          } = c;
+          const { value: formValues } = await Swal.fire({
+            title: title,
+            html: msg,
+            backdrop: false,
+            focusConfirm: false,
+            showCancelButton: true,
+            willOpen: () => {
+              const elem = document.getElementById("reservation-dates-modal");
+              const rangepicker = new DateRangePicker(elem, {
+                format: "yyyy.mm.dd",
+                showOnFocus: true,
+              });
+            },
+            preConfirm: () => {
+              return [
+                document.getElementById('start').value,
+                document.getElementById('end').value
+              ]
+            },
+            didOpen: () => {
+              document.getElementById("start").removeAttribute("disabled")
+              document.getElementById("end").removeAttribute("disabled")
+            }
+          })
+
+          if (formValues) {
+            Swal.fire(JSON.stringify(formValues))
+          }
         }
 
         return {
           toast: toast,
           success: success,
           error: error,
+          custom: custom,
         }
       }
 
