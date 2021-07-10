@@ -5,8 +5,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/yj-matmul/bookings/pkg/config"
-	"github.com/yj-matmul/bookings/pkg/handlers"
+	"github.com/yj-matmul/bookings/internal/config"
+	"github.com/yj-matmul/bookings/internal/handlers"
 )
 
 // routes leads appropriate url to handler function

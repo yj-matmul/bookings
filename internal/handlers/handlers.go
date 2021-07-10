@@ -6,9 +6,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/yj-matmul/bookings/pkg/config"
-	"github.com/yj-matmul/bookings/pkg/models"
-	"github.com/yj-matmul/bookings/pkg/render"
+	"github.com/yj-matmul/bookings/internal/config"
+	"github.com/yj-matmul/bookings/internal/models"
+	"github.com/yj-matmul/bookings/internal/render"
 )
 
 // Repository is the repository type

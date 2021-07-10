@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 
 	"github.com/justinas/nosurf"
-	"github.com/yj-matmul/bookings/pkg/config"
-	"github.com/yj-matmul/bookings/pkg/models"
+	"github.com/yj-matmul/bookings/internal/config"
+	"github.com/yj-matmul/bookings/internal/models"
 )
 
 // implement custom function when go lang have no built-in function I want to
