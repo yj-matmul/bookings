@@ -63,6 +63,7 @@ func CreateTemplateCache() (map[string]*template.Template, error) {
 
 	pages, err := filepath.Glob("./templates/*.page.html")
 	if err != nil {
+		log.Println("CreateTemplateCache, glob page.html", err)
 		return templateCache, err
 	}
 
@@ -71,17 +72,20 @@ func CreateTemplateCache() (map[string]*template.Template, error) {
 
 		ts, err := template.New(name).Funcs(functions).ParseFiles(page)
 		if err != nil {
+			log.Println("CreateTemplateCache, parsing page.html", err)
 			return templateCache, err
 		}
 
 		matches, err := filepath.Glob("./templates/*.layout.html")
 		if err != nil {
+			log.Println("CreateTemplateCache, glob layout.html", err)
 			return templateCache, err
 		}
 
 		if len(matches) > 0 {
 			ts, err = ts.ParseGlob("./templates/*.layout.html")
 			if err != nil {
+				log.Println("CreateTemplateCache, parsing layout.html", err)
 				return templateCache, err
 			}
 		}
