@@ -88,7 +88,6 @@
 
       (function () {
         'use strict'
-
         window.addEventListener('load', function() {
           // Fetch all the forms we want to apply custom Bootstrap validation styles to
           var forms = document.getElementsByClassName('needs-validation')
@@ -105,7 +104,7 @@
               }, false)
             })
         })
-      })()
+      })();
 
       function notify(msg, msgType) {
         notie.alert({
@@ -113,7 +112,7 @@
           text: msg,
           stay: false, // optional, default = false
           time: 3, // optional, default = 3, minimum = 1,
-          position: "top" // optional, default = 'top', enum: ['top', 'bottom']
+          position: "top", // optional, default = 'top', enum: ['top', 'bottom']
         })
       }
 
@@ -125,6 +124,18 @@
           confirmButtonText: confirmButtonText
         })
       }
+
+      {{with (.Error)}}
+      notify("{{.}}", "error")
+      {{end}}
+
+      {{with .Flash}}
+      notify("{{.}}", "success")
+      {{end}}
+
+      {{with .Warning}}
+      notify("{{.}}", "warning")
+      {{end}}
 
       function Prompt() {
         let toast = function(c) {
