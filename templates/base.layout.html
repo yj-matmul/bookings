@@ -84,7 +84,7 @@
     <script>
       let attention = Prompt();
 
-      // alert("hello")
+      // alert("hello");
 
       (function () {
         'use strict'
@@ -123,20 +123,16 @@
           html: htmlText,
           confirmButtonText: confirmButtonText
         })
-      }
+      };
 
-      {{with (.Error)}}
-      notify("{{.}}", "error")
-      {{end}}
+      // var templateData = <%=TemplateData%>;
 
-      {{with .Flash}}
-      notify("{{.}}", "success")
-      {{end}}
-
-      {{with .Warning}}
-      notify("{{.}}", "warning")
-      {{end}}
-
+      // {{with ({.Error})}}
+      // console.log("1")
+      // notify("something", "success")
+      // {{end}}
+      // express
+      
       function Prompt() {
         let toast = function(c) {
           const {
