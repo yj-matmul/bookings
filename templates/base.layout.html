@@ -14,10 +14,8 @@
     <!-- custom notify function -->
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/notie/dist/notie.min.css">
     <link rel="stylesheet" type="text/css" href="/static/css/styles.css">
-
-    <title>My nice page</title>
-
   </head>
+  
   <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
@@ -38,8 +36,8 @@
                 Roooms
                 </a>
                 <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                <li><a class="dropdown-item" href="/generals-quarters">General's Quarters</a></li>
-                <li><a class="dropdown-item" href="/majors-suite">Major's Suite</a></li>
+                  <li><a class="dropdown-item" href="/generals-quarters">General's Quarters</a></li>
+                  <li><a class="dropdown-item" href="/majors-suite">Major's Suite</a></li>
                 </ul>
             </li>
             <li class="nav-item">
@@ -84,35 +82,30 @@
     <script>
       let attention = Prompt();
 
-      // alert("hello");
-
       (function () {
-        'use strict'
+        'use strict';
         window.addEventListener('load', function() {
           // Fetch all the forms we want to apply custom Bootstrap validation styles to
-          var forms = document.getElementsByClassName('needs-validation')
+          let forms = document.getElementsByClassName('needs-validation')
 
           // Loop over them and prevent submission
           Array.prototype.slice.call(forms)
             .forEach(function (form) {
               form.addEventListener('submit', function (event) {
                 if (!form.checkValidity()) {
-                  event.preventDefault()
-                  event.stopPropagation()
+                  event.preventDefault();
+                  event.stopPropagation();
                 }
-                form.classList.add('was-validated')
-              }, false)
-            })
-        })
+                form.classList.add('was-validated');
+              }, false);
+            });
+        }, false);
       })();
 
       function notify(msg, msgType) {
         notie.alert({
           type: msgType, // optional, default = 4, enum: [1, 2, 3, 4, 5, 'success', 'warning', 'error', 'info', 'neutral']
           text: msg,
-          stay: false, // optional, default = false
-          time: 3, // optional, default = 3, minimum = 1,
-          position: "top", // optional, default = 'top', enum: ['top', 'bottom']
         })
       }
 
@@ -123,15 +116,18 @@
           html: htmlText,
           confirmButtonText: confirmButtonText
         })
-      };
+      }
+      {{with .Error}}
+        notify("{{.}}", "error")
+      {{end}}
 
-      // var templateData = <%=TemplateData%>;
+      {{with .Flash}}
+        notify("{{.}}", "success")
+      {{end}}
 
-      // {{with ({.Error})}}
-      // console.log("1")
-      // notify("something", "success")
-      // {{end}}
-      // express
+      {{with .Warning}}
+        notify("{{.}}", "warning")
+      {{end}}
       
       function Prompt() {
         let toast = function(c) {
@@ -246,7 +242,6 @@
       }
 
     </script>
-    
   </body>
   </html>
 {{end}}
