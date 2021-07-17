@@ -15,6 +15,7 @@ import (
 
 // implement custom function when go lang have no built-in function I want to
 var functions = template.FuncMap{}
+var pathToTemplates = "./templates"
 
 var app *config.AppConfig
 
@@ -64,7 +65,7 @@ func RenderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, td *mod
 func CreateTemplateCache() (map[string]*template.Template, error) {
 	templateCache := map[string]*template.Template{}
 
-	pages, err := filepath.Glob("./templates/*.page.html")
+	pages, err := filepath.Glob(fmt.Sprintf("%s/*.page.html", pathToTemplates))
 	if err != nil {
 		log.Println("CreateTemplateCache, glob page.html", err)
 		return templateCache, err
@@ -79,14 +80,14 @@ func CreateTemplateCache() (map[string]*template.Template, error) {
 			return templateCache, err
 		}
 
-		matches, err := filepath.Glob("./templates/*.layout.html")
+		matches, err := filepath.Glob(fmt.Sprintf("%s/*.layout.html", pathToTemplates))
 		if err != nil {
 			log.Println("CreateTemplateCache, glob layout.html", err)
 			return templateCache, err
 		}
 
 		if len(matches) > 0 {
-			ts, err = ts.ParseGlob("./templates/*.layout.html")
+			ts, err = ts.ParseGlob(fmt.Sprintf("%s/*.layout.html", pathToTemplates))
 			if err != nil {
 				log.Println("CreateTemplateCache, parsing layout.html", err)
 				return templateCache, err
