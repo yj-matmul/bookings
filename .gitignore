@@ -2,3 +2,4 @@
 *.exe
 database.yml
 *.sql
+run.bat
