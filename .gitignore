@@ -1,2 +1,4 @@
 *.code-workspace
 *.exe
+database.yml
+*.sql
