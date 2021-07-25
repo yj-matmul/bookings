@@ -7,24 +7,29 @@ import (
 	"net/http"
 
 	"github.com/yj-matmul/bookings/internal/config"
+	"github.com/yj-matmul/bookings/internal/driver"
 	"github.com/yj-matmul/bookings/internal/forms"
 	"github.com/yj-matmul/bookings/internal/helpers"
 	"github.com/yj-matmul/bookings/internal/models"
 	"github.com/yj-matmul/bookings/internal/render"
+	"github.com/yj-matmul/bookings/internal/repository"
+	"github.com/yj-matmul/bookings/internal/repository/dbrepo"
 )
 
 // Repository is the repository type
 type Repository struct {
 	App *config.AppConfig
+	DB  repository.DatabaseRepo
 }
 
 // Repo the repository used by the handlers
 var Repo *Repository
 
 // NewRepo creates a new repository
-func NewRepo(a *config.AppConfig) *Repository {
+func NewRepo(a *config.AppConfig, db *driver.DB) *Repository {
 	return &Repository{
 		App: a,
+		DB:  dbrepo.NewPostgresRepo(db.SQL, a),
 	}
 }
 

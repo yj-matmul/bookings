@@ -10,6 +10,7 @@ import (
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/yj-matmul/bookings/internal/config"
+	"github.com/yj-matmul/bookings/internal/driver"
 	"github.com/yj-matmul/bookings/internal/handlers"
 	"github.com/yj-matmul/bookings/internal/helpers"
 	"github.com/yj-matmul/bookings/internal/models"
@@ -25,7 +26,11 @@ var errorLog *log.Logger
 
 // main is the main application function
 func main() {
-	err := run()
+	db, err := run()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.SQL.Close()
 
 	fmt.Println(fmt.Sprintf("Starting application on prot %s", portNumber))
 
@@ -37,7 +42,7 @@ func main() {
 	log.Fatal(err)
 }
 
-func run() error {
+func run() (*driver.DB, error) {
 	// what am I going to put in the session
 	gob.Register(models.Reservation{})
 
@@ -59,18 +64,39 @@ func run() error {
 
 	app.Session = session
 
+	// loading password of DB
+	var password string
+
+	file, err := os.Open("./static/db_info.txt")
+	if err != nil {
+		log.Fatal("Cannot open db info file")
+	}
+	defer file.Close()
+	fmt.Fscan(file, &password)
+	log.Println("Loaded password from a private file")
+
+	// connect to database
+	log.Println("connect to database...")
+	dsn := fmt.Sprintf("host=localhost port=5001 dbname=test_connect user=postgres password=%s", password)
+	db, err := driver.ConnectSQL(dsn)
+	if err != nil {
+		log.Fatal("Cannot connect to database! Dying...")
+	}
+	log.Println("connect to database!")
+
+	// create template cache
 	tc, err := render.CreateTemplateCache()
 	if err != nil {
 		log.Fatal("cannot create template cache")
-		return err
+		return nil, err
 	}
 
 	app.TemplateCache = tc
 
-	repo := handlers.NewRepo(&app)
+	repo := handlers.NewRepo(&app, db)
 	handlers.NewHandlers(repo)
 	render.NewTemplates(&app)
 	helpers.NewHelpers(&app)
 
-	return nil
+	return db, nil
 }
