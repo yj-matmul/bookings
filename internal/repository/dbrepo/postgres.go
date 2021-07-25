@@ -2,6 +2,7 @@ package dbrepo
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/yj-matmul/bookings/internal/models"
@@ -13,10 +14,10 @@ func (m *postgresDBRepo) AllUsers() bool {
 
 // InsertReservation inserts a reservation into the database
 func (m *postgresDBRepo) InsertReservation(res models.Reservation) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 3)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	stmt := `insert into reservations
+	stmt := `insert into reservations 
 			 (first_name, last_name, email, phone, start_date, end_date, room_id, created_at, updated_at)
 			 values
 			 ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
@@ -28,9 +29,11 @@ func (m *postgresDBRepo) InsertReservation(res models.Reservation) error {
 		res.Phone,
 		res.StartDate,
 		res.EndDate,
+		res.RoomID,
 		time.Now(),
 		time.Now())
 	if err != nil {
+		log.Println("error here")
 		return err
 	}
 

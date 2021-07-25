@@ -116,6 +116,8 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println(reservation)
+
 	err = m.DB.InsertReservation(reservation)
 	if err != nil {
 		helpers.ServerError(w, err)
