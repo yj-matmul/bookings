@@ -3,3 +3,4 @@
 database.yml
 *.sql
 run.bat
+*.txt
