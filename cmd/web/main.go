@@ -23,6 +23,7 @@ var app config.AppConfig
 var session *scs.SessionManager
 var infoLog *log.Logger
 var errorLog *log.Logger
+var dbInfoPath = "./static/db_info.txt"
 
 // main is the main application function
 func main() {
@@ -45,6 +46,9 @@ func main() {
 func run() (*driver.DB, error) {
 	// what am I going to put in the session
 	gob.Register(models.Reservation{})
+	gob.Register(models.User{})
+	gob.Register(models.Room{})
+	gob.Register(models.Restriction{})
 
 	// change this to true when in production
 	app.InProduction = false
@@ -64,20 +68,10 @@ func run() (*driver.DB, error) {
 
 	app.Session = session
 
-	// loading password of DB
-	var password string
-
-	file, err := os.Open("./static/db_info.txt")
-	if err != nil {
-		log.Fatal("Cannot open db info file")
-	}
-	defer file.Close()
-	fmt.Fscan(file, &password)
-	log.Println("Loaded password from a private file")
-
 	// connect to database
+	dsn := loadDsn(dbInfoPath)
+
 	log.Println("connect to database...")
-	dsn := fmt.Sprintf("host=localhost port=5001 dbname=test_connect user=postgres password=%s", password)
 	db, err := driver.ConnectSQL(dsn)
 	if err != nil {
 		log.Fatal("Cannot connect to database! Dying...")
@@ -95,8 +89,23 @@ func run() (*driver.DB, error) {
 
 	repo := handlers.NewRepo(&app, db)
 	handlers.NewHandlers(repo)
-	render.NewTemplates(&app)
+	render.NewRenderer(&app)
 	helpers.NewHelpers(&app)
 
 	return db, nil
+}
+
+func loadDsn(path string) string {
+	// loading password of DB
+	var password string
+
+	file, err := os.Open(path)
+	if err != nil {
+		log.Fatal("Cannot open db info file")
+	}
+	defer file.Close()
+	fmt.Fscan(file, &password)
+	log.Println("Loaded password from a private file")
+
+	return fmt.Sprintf("host=localhost port=5001 dbname=test_connect user=postgres password=%s", password)
 }
