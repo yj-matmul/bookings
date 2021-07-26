@@ -107,5 +107,5 @@ func loadDsn(path string) string {
 	fmt.Fscan(file, &password)
 	log.Println("Loaded password from a private file")
 
-	return fmt.Sprintf("host=localhost port=5001 dbname=test_connect user=postgres password=%s", password)
+	return fmt.Sprintf("host=localhost port=5001 dbname=bookings user=postgres password=%s", password)
 }
