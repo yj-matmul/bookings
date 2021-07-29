@@ -4,13 +4,23 @@
   <div class="container">
     <div class="row">
         <div class="col">
-            <h1 class="mt-2">Make a reservation</h1>
-            <p><strong>Reservation Details</strong></p>
-
             {{$res := index .Data "reservation"}}
+
+            <h1 class="mt-2">Make a reservation</h1>
+
+            <p><strong>Reservation Details</strong><br>
+            Room name: {{$res.Room.RoomName}}<br>
+            Arrival: {{index .StringMap "start_date"}}<br>
+            Departure: {{index .StringMap "end_date"}}<br>
+            </p>
+
 
             <form action="" method="POST" class="" novalidate>
                 <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+                <input type="hidden" name="start_date" value="{{index .StringMap "start_date"}}">
+                <input type="hidden" name="end_date" value="{{index .StringMap "end_date"}}">
+                <input type="hidden" name="room_id" value="{{$res.RoomID}}">
+
                 <div class="form-group mt-4">
                     <label for="first_name">First name:</label>
                     {{with .Form.Errors.Get "first_name"}}
@@ -27,20 +37,6 @@
                     {{end}}
                     <input class="form-control {{with .Form.Errors.Get "last_name"}} is-invalid {{end}}" 
                            type="text" id="last_name" name="last_name" value="{{$res.LastName}}" required autocomplete="off">
-                </div>
-
-                <div>
-                    <label for="start_date">Start Date</label>
-                    <input type="text" id="start_date" name="start_date" class="form-control">
-                </div>
-
-                <div>
-                    <label for="end_date">End Date</label>
-                    <input type="text" id="end_date" name="end_date" class="form-control">
-                </div>
-
-                <div>
-                    <input type="hidden" name="room_id" id="room_id" value="1">
                 </div>
 
                 <div class="form-group">
