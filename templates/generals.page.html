@@ -16,9 +16,9 @@
         </div>
 
         <div class="row">
-        <div class="col text-center">
-            <a id="check-availability-button" href="#!" class="btn btn-success">Check Availability</a>
-        </div>
+            <div class="col text-center">
+                <a id="check-availability-button" href="#!" class="btn btn-success">Check Availability</a>
+            </div>
         </div>
     </div>
 {{end}}
@@ -30,10 +30,10 @@
           <form id="check-availability-form" action="" class="needs-valiation" method="POST" novalidate>
             <div class="row" id="reservation-dates-modal">
               <div class="col">
-                <input disabled required class="form-control" type="text" name="start" id="start" placeholder="Arrival Date">
+                <input disabled required class="form-control" type="text" name="start" id="start" placeholder="Arrival">
               </div>
               <div class="col">
-                <input disabled required class="form-control" type="text" name="end" id="end" placeholder="Departure Date">
+                <input disabled required class="form-control" type="text" name="end" id="end" placeholder="Departure">
               </div>
             </div>
           </form>
@@ -72,7 +72,7 @@
               .then(data => {
                   if (data.ok) {
                     attention.custom({
-                      icon: "suceess",
+                      icon: "success",
                       showConfirmButton: false,
                       msg: '<p>Room is available!</p>'
                           + '<p><a href="/book-room?id='
