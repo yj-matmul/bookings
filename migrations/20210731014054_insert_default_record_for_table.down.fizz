@@ -1,0 +1,2 @@
+sql("delete from rooms;")
+sql("delete from restrictions;")
