@@ -1,6 +1,6 @@
 *.code-workspace
 *.exe
 database.yml
-*.sql
+schema.sql
 run.bat
 *.txt
