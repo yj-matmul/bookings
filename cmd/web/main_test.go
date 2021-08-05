@@ -5,7 +5,9 @@ import (
 )
 
 func TestRun(t *testing.T) {
-	_, err := run()
+	dbInfoPath = "./../../static/db_info.txt"
+	dsn := loadDsn(dbInfoPath)
+	_, err := run(dsn)
 	if err != nil {
 		t.Error("fail run()")
 	}

@@ -23,11 +23,13 @@ var app config.AppConfig
 var session *scs.SessionManager
 var infoLog *log.Logger
 var errorLog *log.Logger
-var dbInfoPath = "./static/db_info.txt"
+var dbInfoPath string
 
 // main is the main application function
 func main() {
-	db, err := run()
+	dbInfoPath = "./static/db_info.txt"
+	dsn := loadDsn(dbInfoPath)
+	db, err := run(dsn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -43,7 +45,7 @@ func main() {
 	log.Fatal(err)
 }
 
-func run() (*driver.DB, error) {
+func run(dsn string) (*driver.DB, error) {
 	// what am I going to put in the session
 	gob.Register(models.Reservation{})
 	gob.Register(models.User{})
@@ -69,8 +71,6 @@ func run() (*driver.DB, error) {
 	app.Session = session
 
 	// connect to database
-	dsn := loadDsn(dbInfoPath)
-
 	log.Println("connect to database...")
 	db, err := driver.ConnectSQL(dsn)
 	if err != nil {
