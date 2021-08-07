@@ -7,9 +7,11 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 
+	"github.com/yj-matmul/bookings/internal/driver"
 	"github.com/yj-matmul/bookings/internal/models"
 )
 
@@ -266,6 +268,16 @@ func TestRepository_PostReservation(t *testing.T) {
 	}
 }
 
+func TestNewRepo(t *testing.T) {
+	var db driver.DB
+	testRepo := NewRepo(&app, &db)
+
+	if reflect.TypeOf(testRepo).String() != "*handlers.Repository" {
+		t.Errorf("Did not get correct type from NewRepo: got %s, wanted *handlers.Repository",
+			reflect.TypeOf(testRepo).String())
+	}
+}
+
 func TestRepository_ReservationSummary(t *testing.T) {
 	reservation := models.Reservation{
 		RoomID: 1,
@@ -392,7 +404,7 @@ func TestRepository_PostAvailability(t *testing.T) {
 func TestRepository_AvailabilityJson(t *testing.T) {
 	reqBody := "start=2050-01-02"
 	reqBody = fmt.Sprintf("%s&%s", reqBody, "end=2050-01-03")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "roomd_id=1")
+	reqBody = fmt.Sprintf("%s&%s", reqBody, "room_id=1")
 
 	req, _ := http.NewRequest("POST", "/search-availability-json", strings.NewReader(reqBody))
 	ctx := getCtx(req)
@@ -440,29 +452,79 @@ func TestRepository_AvailabilityJson(t *testing.T) {
 		t.Error("failed to parse json")
 	}
 }
-
 func TestRepository_ChooseRoom(t *testing.T) {
-	// reservation := models.Reservation{
-	// 	RoomID: 1,
-	// 	Room: models.Room{
-	// 		ID:       1,
-	// 		RoomName: "General's Quarters",
-	// 	},
-	// }
+	reservation := models.Reservation{
+		RoomID: 1,
+		Room: models.Room{
+			ID:       1,
+			RoomName: "General's Quarters",
+		},
+	}
 
-	// req, _ := http.NewRequest("GET", "/choose-room/1", nil)
-	// ctx := getCtx(req)
-	// req = req.WithContext(ctx)
-	// req.RequestURI = "/choose-room/1"
-	// rr := httptest.NewRecorder()
-	// session.Put(ctx, "reservation", reservation)
+	req, _ := http.NewRequest("GET", "/choose-room/1", nil)
+	ctx := getCtx(req)
+	req = req.WithContext(ctx)
+	req.RequestURI = "/choose-room/1"
+	rr := httptest.NewRecorder()
+	session.Put(ctx, "reservation", reservation)
 
-	// handler := http.HandlerFunc(Repo.ChooseRoom)
+	handler := http.HandlerFunc(Repo.ChooseRoom)
 
-	// handler.ServeHTTP(rr, req)
-	// if rr.Code != http.StatusSeeOther {
-	// 	t.Errorf("ChooseRoom handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusSeeOther)
-	// }
+	handler.ServeHTTP(rr, req)
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("ChooseRoom handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusSeeOther)
+	}
+
+	// test case that has invalid url parameter
+	req, _ = http.NewRequest("GET", "/choose-room/1", nil)
+	ctx = getCtx(req)
+	req = req.WithContext(ctx)
+	req.RequestURI = "/choose-room/invalid"
+	rr = httptest.NewRecorder()
+
+	handler.ServeHTTP(rr, req)
+	if rr.Code != http.StatusTemporaryRedirect {
+		t.Errorf("ChooseRoom handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusTemporaryRedirect)
+	}
+
+	// test case that has not reservation from session
+	req, _ = http.NewRequest("GET", "/choose-room/1", nil)
+	ctx = getCtx(req)
+	req = req.WithContext(ctx)
+	req.RequestURI = "/choose-room/1"
+	rr = httptest.NewRecorder()
+
+	handler.ServeHTTP(rr, req)
+	if rr.Code != http.StatusTemporaryRedirect {
+		t.Errorf("ChooseRoom handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusTemporaryRedirect)
+	}
+}
+
+func TestRepository_BookRoom(t *testing.T) {
+	req, _ := http.NewRequest("GET",
+		"/book-room?s=2050-01-02&e=2050-01-03&id=1", nil)
+	ctx := getCtx(req)
+	req = req.WithContext(ctx)
+	rr := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(Repo.BookRoom)
+
+	handler.ServeHTTP(rr, req)
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("BookRoom handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusSeeOther)
+	}
+
+	// test case that has invalid room id
+	req, _ = http.NewRequest("GET",
+		"/book-room?s=2050-01-02&e=2050-01-03&id=10000", nil)
+	ctx = getCtx(req)
+	req = req.WithContext(ctx)
+	rr = httptest.NewRecorder()
+
+	handler.ServeHTTP(rr, req)
+	if rr.Code != http.StatusTemporaryRedirect {
+		t.Errorf("BookRoom handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusTemporaryRedirect)
+	}
 }
 
 func getCtx(req *http.Request) context.Context {

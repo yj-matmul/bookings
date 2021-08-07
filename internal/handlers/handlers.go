@@ -5,13 +5,12 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/yj-matmul/bookings/internal/config"
 	"github.com/yj-matmul/bookings/internal/driver"
 	"github.com/yj-matmul/bookings/internal/forms"
-	"github.com/yj-matmul/bookings/internal/helpers"
 	"github.com/yj-matmul/bookings/internal/models"
 	"github.com/yj-matmul/bookings/internal/render"
 	"github.com/yj-matmul/bookings/internal/repository"
@@ -346,11 +345,11 @@ func (m *Repository) Contact(w http.ResponseWriter, r *http.Request) {
 
 // ChooseRoom displays list of available rooms
 func (m *Repository) ChooseRoom(w http.ResponseWriter, r *http.Request) {
-	roomID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	log.Println(chi.URLParam(r, "id"))
-	log.Println(roomID)
+	// roomID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	exploded := strings.Split(r.RequestURI, "/")
+	roomID, err := strconv.Atoi(exploded[2])
 	if err != nil {
-		m.App.Session.Put(r.Context(), "error", "invalid data!")
+		m.App.Session.Put(r.Context(), "error", "missing url parameter!")
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
@@ -381,7 +380,8 @@ func (m *Repository) BookRoom(w http.ResponseWriter, r *http.Request) {
 
 	room, err := m.DB.GetRoomByID(roomID)
 	if err != nil {
-		helpers.ServerError(w, err)
+		m.App.Session.Put(r.Context(), "error", "can't get room from DB!")
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
 
