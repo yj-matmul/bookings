@@ -405,20 +405,39 @@ func TestRepository_AvailabilityJson(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	var j jsonResponse
-	err := json.Unmarshal([]byte(rr.Body.String()), &j)
+	err := json.Unmarshal([]byte(rr.Body.Bytes()), &j)
 	if err != nil {
 		t.Error("failed to parse json")
 	}
 
-	// test case that room is not available
-	req, _ = http.NewRequest("POST", "/search-availability", nil)
+	// test for empty form
+	req, _ = http.NewRequest("POST", "/search-availability-json", nil)
 	ctx = getCtx(req)
 	req = req.WithContext(ctx)
 	rr = httptest.NewRecorder()
 
 	handler.ServeHTTP(rr, req)
-	if rr.Code != http.StatusOK {
-		t.Errorf("PostAvailability handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusOK)
+	err = json.Unmarshal([]byte(rr.Body.String()), &j)
+	if err != nil {
+		t.Error("failed to parse json")
+	}
+
+	// test case that room is not available
+	reqBody = "start=2050-01-02"
+	reqBody = fmt.Sprintf("%s&%s", reqBody, "end=2050-01-03")
+	reqBody = fmt.Sprintf("%s&%s", reqBody, "room_id=10000")
+
+	req, _ = http.NewRequest("POST", "/search-availability-json", strings.NewReader(reqBody))
+	ctx = getCtx(req)
+	req = req.WithContext(ctx)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rr = httptest.NewRecorder()
+
+	handler.ServeHTTP(rr, req)
+
+	err = json.Unmarshal([]byte(rr.Body.Bytes()), &j)
+	if err != nil {
+		t.Error("failed to parse json")
 	}
 }
 
