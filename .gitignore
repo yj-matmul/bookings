@@ -4,3 +4,4 @@ database.yml
 schema.sql
 run.bat
 *.txt
+coverage.out
