@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -74,7 +75,7 @@ func TestRepository_Reservation(t *testing.T) {
 	}
 
 	req, _ := http.NewRequest("GET", "/make-reservation", nil)
-	ctx := GetCtx(req)
+	ctx := getCtx(req)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	session.Put(ctx, "reservation", reservation)
@@ -88,7 +89,7 @@ func TestRepository_Reservation(t *testing.T) {
 
 	// test case where reservation is not in session (reset everything)
 	req, _ = http.NewRequest("GET", "/make-reservation", nil)
-	ctx = GetCtx(req)
+	ctx = getCtx(req)
 	req = req.WithContext(ctx)
 	rr = httptest.NewRecorder()
 
@@ -99,7 +100,7 @@ func TestRepository_Reservation(t *testing.T) {
 
 	// test with non-existent room
 	req, _ = http.NewRequest("GET", "/make-reservation", nil)
-	ctx = GetCtx(req)
+	ctx = getCtx(req)
 	req = req.WithContext(ctx)
 	rr = httptest.NewRecorder()
 	reservation.RoomID = 100
@@ -121,7 +122,7 @@ func TestRepository_PostReservation(t *testing.T) {
 	reqBody = fmt.Sprintf("%s&%s", reqBody, "room_id=1")
 
 	req, _ := http.NewRequest("POST", "/make-reservation", strings.NewReader(reqBody))
-	ctx := GetCtx(req)
+	ctx := getCtx(req)
 	req = req.WithContext(ctx)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rr := httptest.NewRecorder()
@@ -134,7 +135,7 @@ func TestRepository_PostReservation(t *testing.T) {
 
 	// test for missing post body
 	req, _ = http.NewRequest("POST", "/make-reservation", nil)
-	ctx = GetCtx(req)
+	ctx = getCtx(req)
 	req = req.WithContext(ctx)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rr = httptest.NewRecorder()
@@ -154,7 +155,7 @@ func TestRepository_PostReservation(t *testing.T) {
 	reqBody = fmt.Sprintf("%s&%s", reqBody, "room_id=1")
 
 	req, _ = http.NewRequest("POST", "/make-reservation", strings.NewReader(reqBody))
-	ctx = GetCtx(req)
+	ctx = getCtx(req)
 	req = req.WithContext(ctx)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rr = httptest.NewRecorder()
@@ -174,7 +175,7 @@ func TestRepository_PostReservation(t *testing.T) {
 	reqBody = fmt.Sprintf("%s&%s", reqBody, "room_id=1")
 
 	req, _ = http.NewRequest("POST", "/make-reservation", strings.NewReader(reqBody))
-	ctx = GetCtx(req)
+	ctx = getCtx(req)
 	req = req.WithContext(ctx)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rr = httptest.NewRecorder()
@@ -194,7 +195,7 @@ func TestRepository_PostReservation(t *testing.T) {
 	reqBody = fmt.Sprintf("%s&%s", reqBody, "room_id=invalid")
 
 	req, _ = http.NewRequest("POST", "/make-reservation", strings.NewReader(reqBody))
-	ctx = GetCtx(req)
+	ctx = getCtx(req)
 	req = req.WithContext(ctx)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rr = httptest.NewRecorder()
@@ -214,7 +215,7 @@ func TestRepository_PostReservation(t *testing.T) {
 	reqBody = fmt.Sprintf("%s&%s", reqBody, "room_id=1")
 
 	req, _ = http.NewRequest("POST", "/make-reservation", strings.NewReader(reqBody))
-	ctx = GetCtx(req)
+	ctx = getCtx(req)
 	req = req.WithContext(ctx)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rr = httptest.NewRecorder()
@@ -234,7 +235,7 @@ func TestRepository_PostReservation(t *testing.T) {
 	reqBody = fmt.Sprintf("%s&%s", reqBody, "room_id=10000")
 
 	req, _ = http.NewRequest("POST", "/make-reservation", strings.NewReader(reqBody))
-	ctx = GetCtx(req)
+	ctx = getCtx(req)
 	req = req.WithContext(ctx)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rr = httptest.NewRecorder()
@@ -254,7 +255,7 @@ func TestRepository_PostReservation(t *testing.T) {
 	reqBody = fmt.Sprintf("%s&%s", reqBody, "room_id=10001")
 
 	req, _ = http.NewRequest("POST", "/make-reservation", strings.NewReader(reqBody))
-	ctx = GetCtx(req)
+	ctx = getCtx(req)
 	req = req.WithContext(ctx)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rr = httptest.NewRecorder()
@@ -265,7 +266,187 @@ func TestRepository_PostReservation(t *testing.T) {
 	}
 }
 
-func GetCtx(req *http.Request) context.Context {
+func TestRepository_ReservationSummary(t *testing.T) {
+	reservation := models.Reservation{
+		RoomID: 1,
+		Room: models.Room{
+			ID:       1,
+			RoomName: "General's Quarters",
+		},
+	}
+
+	req, _ := http.NewRequest("GET", "/reservation-summary", nil)
+	ctx := getCtx(req)
+	req = req.WithContext(ctx)
+	rr := httptest.NewRecorder()
+	session.Put(ctx, "reservation", reservation)
+
+	handler := http.HandlerFunc(Repo.ReservationSummary)
+
+	handler.ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Errorf("ReservationSummary handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusOK)
+	}
+
+	// test case where reservation is not in session
+	req, _ = http.NewRequest("GET", "/reservation-summary", nil)
+	ctx = getCtx(req)
+	req = req.WithContext(ctx)
+	rr = httptest.NewRecorder()
+
+	handler.ServeHTTP(rr, req)
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("ReservationSummary handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusSeeOther)
+	}
+}
+
+func TestRepository_PostAvailability(t *testing.T) {
+	reqBody := "start=2050-01-02"
+	reqBody = fmt.Sprintf("%s&%s", reqBody, "end=2050-01-03")
+
+	req, _ := http.NewRequest("POST", "/search-availability", strings.NewReader(reqBody))
+	ctx := getCtx(req)
+	req = req.WithContext(ctx)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rr := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(Repo.PostAvailability)
+
+	handler.ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Errorf("PostAvailability handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusOK)
+	}
+
+	// test for empty post body
+	req, _ = http.NewRequest("POST", "/search-availability", nil)
+	ctx = getCtx(req)
+	req = req.WithContext(ctx)
+	rr = httptest.NewRecorder()
+
+	handler.ServeHTTP(rr, req)
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("PostAvailability handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusSeeOther)
+	}
+
+	// test for invalid start date
+	reqBody = "start=invalid"
+	reqBody = fmt.Sprintf("%s&%s", reqBody, "end=2050-01-03")
+
+	req, _ = http.NewRequest("POST", "/search-availability", strings.NewReader(reqBody))
+	ctx = getCtx(req)
+	req = req.WithContext(ctx)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rr = httptest.NewRecorder()
+
+	handler.ServeHTTP(rr, req)
+	if rr.Code != http.StatusTemporaryRedirect {
+		t.Errorf("PostAvailability handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusTemporaryRedirect)
+	}
+
+	// test for invalid end date
+	reqBody = "start=2050-01-02"
+	reqBody = fmt.Sprintf("%s&%s", reqBody, "end=invalid")
+
+	req, _ = http.NewRequest("POST", "/search-availability", strings.NewReader(reqBody))
+	ctx = getCtx(req)
+	req = req.WithContext(ctx)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rr = httptest.NewRecorder()
+
+	handler.ServeHTTP(rr, req)
+	if rr.Code != http.StatusTemporaryRedirect {
+		t.Errorf("PostAvailability handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusTemporaryRedirect)
+	}
+
+	// test case where start date is after end date
+	reqBody = "start=2050-01-04"
+	reqBody = fmt.Sprintf("%s&%s", reqBody, "end=2050-01-03")
+
+	req, _ = http.NewRequest("POST", "/search-availability", strings.NewReader(reqBody))
+	ctx = getCtx(req)
+	req = req.WithContext(ctx)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rr = httptest.NewRecorder()
+
+	handler.ServeHTTP(rr, req)
+	if rr.Code != http.StatusTemporaryRedirect {
+		t.Errorf("PostAvailability handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusTemporaryRedirect)
+	}
+
+	// test case where rooms are not avail
+	reqBody = "start=2050-01-03"
+	reqBody = fmt.Sprintf("%s&%s", reqBody, "end=2050-01-03")
+
+	req, _ = http.NewRequest("POST", "/search-availability", strings.NewReader(reqBody))
+	ctx = getCtx(req)
+	req = req.WithContext(ctx)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rr = httptest.NewRecorder()
+
+	handler.ServeHTTP(rr, req)
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("PostAvailability handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusSeeOther)
+	}
+}
+
+func TestRepository_AvailabilityJson(t *testing.T) {
+	reqBody := "start=2050-01-02"
+	reqBody = fmt.Sprintf("%s&%s", reqBody, "end=2050-01-03")
+	reqBody = fmt.Sprintf("%s&%s", reqBody, "roomd_id=1")
+
+	req, _ := http.NewRequest("POST", "/search-availability-json", strings.NewReader(reqBody))
+	ctx := getCtx(req)
+	req = req.WithContext(ctx)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rr := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(Repo.AvailabilityJSON)
+
+	handler.ServeHTTP(rr, req)
+
+	var j jsonResponse
+	err := json.Unmarshal([]byte(rr.Body.String()), &j)
+	if err != nil {
+		t.Error("failed to parse json")
+	}
+
+	// test case that room is not available
+	req, _ = http.NewRequest("POST", "/search-availability", nil)
+	ctx = getCtx(req)
+	req = req.WithContext(ctx)
+	rr = httptest.NewRecorder()
+
+	handler.ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Errorf("PostAvailability handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusOK)
+	}
+}
+
+func TestRepository_ChooseRoom(t *testing.T) {
+	// reservation := models.Reservation{
+	// 	RoomID: 1,
+	// 	Room: models.Room{
+	// 		ID:       1,
+	// 		RoomName: "General's Quarters",
+	// 	},
+	// }
+
+	// req, _ := http.NewRequest("GET", "/choose-room/1", nil)
+	// ctx := getCtx(req)
+	// req = req.WithContext(ctx)
+	// req.RequestURI = "/choose-room/1"
+	// rr := httptest.NewRecorder()
+	// session.Put(ctx, "reservation", reservation)
+
+	// handler := http.HandlerFunc(Repo.ChooseRoom)
+
+	// handler.ServeHTTP(rr, req)
+	// if rr.Code != http.StatusSeeOther {
+	// 	t.Errorf("ChooseRoom handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusSeeOther)
+	// }
+}
+
+func getCtx(req *http.Request) context.Context {
 	ctx, err := session.Load(req.Context(), req.Header.Get("X-Session"))
 	if err != nil {
 		log.Println(err)
