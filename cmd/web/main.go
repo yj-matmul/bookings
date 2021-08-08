@@ -35,6 +35,19 @@ func main() {
 	}
 	defer db.SQL.Close()
 
+	defer close(app.MailChan)
+
+	fmt.Println("Starting mail listener...")
+	listenForMail()
+
+	// msg := models.MailData{
+	// 	To:      "john@do.ca",
+	// 	From:    "me@here.com",
+	// 	Subject: "Some subject",
+	// 	Content: "",
+	// }
+	// app.MailChan <- msg
+
 	fmt.Println(fmt.Sprintf("Starting application on prot %s", portNumber))
 
 	srv := &http.Server{
@@ -51,6 +64,9 @@ func run(dsn string) (*driver.DB, error) {
 	gob.Register(models.User{})
 	gob.Register(models.Room{})
 	gob.Register(models.Restriction{})
+
+	mailChan := make(chan models.MailData)
+	app.MailChan = mailChan
 
 	// change this to true when in production
 	app.InProduction = false
@@ -105,7 +121,7 @@ func loadDsn(path string) string {
 	}
 	defer file.Close()
 	fmt.Fscan(file, &password)
-	log.Println("Loaded password from a private file")
+	log.Println("Loaded password from db info file")
 
 	return fmt.Sprintf("host=localhost port=5001 dbname=bookings user=postgres password=%s", password)
 }
