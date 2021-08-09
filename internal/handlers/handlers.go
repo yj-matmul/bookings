@@ -149,7 +149,7 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 	if !form.Valid() {
 		data := make(map[string]interface{})
 		data["reservation"] = reservation
-		http.Error(w, "my own error message", http.StatusSeeOther)
+		// http.Error(w, "my own error message", http.StatusSeeOther)
 		render.Template(w, r, "make-reservation.page.html", &models.TemplateData{
 			Form: form,
 			Data: data,
@@ -428,8 +428,9 @@ func (m *Repository) BookRoom(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/make-reservation", http.StatusSeeOther)
 }
 
-// ShowLogin
+// ShowLogin shows the login screen
 func (m *Repository) ShowLogin(w http.ResponseWriter, r *http.Request) {
+	log.Println("*1")
 	render.Template(w, r, "login.page.html", &models.TemplateData{
 		Form: forms.New(nil),
 	})
@@ -438,24 +439,28 @@ func (m *Repository) ShowLogin(w http.ResponseWriter, r *http.Request) {
 // PostShowLogin handles logging the user in
 func (m *Repository) PostShowLogin(w http.ResponseWriter, r *http.Request) {
 	_ = m.App.Session.RenewToken(r.Context())
-
+	log.Println("1")
 	err := r.ParseForm()
 	if err != nil {
-		m.App.Session.Put(r.Context(), "error", "can't parse login form")
-		http.Redirect(w, r, "/user/login", http.StatusTemporaryRedirect)
-		return
+		// m.App.Session.Put(r.Context(), "error", "can't parse login form")
+		// http.Redirect(w, r, "/user/login", http.StatusTemporaryRedirect)
+		// return
+		log.Println(err)
 	}
-
+	log.Println("2")
 	email := r.Form.Get("email")
 	password := r.Form.Get("password")
 
 	form := forms.New(r.PostForm)
 	form.Required("email", "password")
 	form.IsEmail("email")
-	if form.Valid() {
-		// TODO - take user back to page
+	if !form.Valid() {
+		render.Template(w, r, "login.page.html", &models.TemplateData{
+			Form: form,
+		})
+		return
 	}
-
+	log.Println("3")
 	id, _, err := m.DB.Authenticate(email, password)
 	if err != nil {
 		log.Println(err)
@@ -463,7 +468,7 @@ func (m *Repository) PostShowLogin(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 		return
 	}
-
+	log.Println("4")
 	m.App.Session.Put(r.Context(), "user_id", id)
 	m.App.Session.Put(r.Context(), "flash", "Logged in successfully")
 	http.Redirect(w, r, "/", http.StatusSeeOther)
