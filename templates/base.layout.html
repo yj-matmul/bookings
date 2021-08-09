@@ -48,7 +48,13 @@
               </li>
               <li class="nav-item">
                 {{if eq .IsAuthenticated 1}}
-                  <a class="nav-link" href="/user/logout" tabindex="-1" aria-disabled="true">Logout</a>
+                  <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Admin</a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                      <li><a class="dropdown-item" href="/admin/dashboard">Dashboard</a></li>
+                      <li><a class="dropdown-item" href="/user/logout">Log out</a></li>
+                    </ul>
+                  </li>
                 {{else}}
                   <a class="nav-link" href="/user/login" tabindex="-1" aria-disabled="true">Login</a>
                 {{end}}
@@ -114,6 +120,7 @@
         notie.alert({
           type: msgType, // optional, default = 4, enum: [1, 2, 3, 4, 5, 'success', 'warning', 'error', 'info', 'neutral']
           text: msg,
+          time: 1
         })
       }
 

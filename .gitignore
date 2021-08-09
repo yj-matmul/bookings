@@ -7,3 +7,4 @@ run.bat
 coverage.out
 *.zip
 *users_table*.sql
+other_source/*
