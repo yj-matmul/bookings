@@ -430,7 +430,6 @@ func (m *Repository) BookRoom(w http.ResponseWriter, r *http.Request) {
 
 // ShowLogin shows the login screen
 func (m *Repository) ShowLogin(w http.ResponseWriter, r *http.Request) {
-	log.Println("*1")
 	render.Template(w, r, "login.page.html", &models.TemplateData{
 		Form: forms.New(nil),
 	})
@@ -439,7 +438,7 @@ func (m *Repository) ShowLogin(w http.ResponseWriter, r *http.Request) {
 // PostShowLogin handles logging the user in
 func (m *Repository) PostShowLogin(w http.ResponseWriter, r *http.Request) {
 	_ = m.App.Session.RenewToken(r.Context())
-	log.Println("1")
+
 	err := r.ParseForm()
 	if err != nil {
 		// m.App.Session.Put(r.Context(), "error", "can't parse login form")
@@ -447,7 +446,7 @@ func (m *Repository) PostShowLogin(w http.ResponseWriter, r *http.Request) {
 		// return
 		log.Println(err)
 	}
-	log.Println("2")
+
 	email := r.Form.Get("email")
 	password := r.Form.Get("password")
 
@@ -460,7 +459,7 @@ func (m *Repository) PostShowLogin(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	log.Println("3")
+
 	id, _, err := m.DB.Authenticate(email, password)
 	if err != nil {
 		log.Println(err)
@@ -468,7 +467,7 @@ func (m *Repository) PostShowLogin(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 		return
 	}
-	log.Println("4")
+
 	m.App.Session.Put(r.Context(), "user_id", id)
 	m.App.Session.Put(r.Context(), "flash", "Logged in successfully")
 	http.Redirect(w, r, "/", http.StatusSeeOther)
