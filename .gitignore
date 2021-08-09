@@ -6,3 +6,4 @@ run.bat
 *.txt
 coverage.out
 *.zip
+*users_table*.sql
