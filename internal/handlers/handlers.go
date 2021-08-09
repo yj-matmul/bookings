@@ -12,6 +12,7 @@ import (
 	"github.com/yj-matmul/bookings/internal/config"
 	"github.com/yj-matmul/bookings/internal/driver"
 	"github.com/yj-matmul/bookings/internal/forms"
+	"github.com/yj-matmul/bookings/internal/helpers"
 	"github.com/yj-matmul/bookings/internal/models"
 	"github.com/yj-matmul/bookings/internal/render"
 	"github.com/yj-matmul/bookings/internal/repository"
@@ -493,7 +494,18 @@ func (m *Repository) AdminNewReservations(w http.ResponseWriter, r *http.Request
 
 //
 func (m *Repository) AdminAllReservations(w http.ResponseWriter, r *http.Request) {
-	render.Template(w, r, "admin-all-reservations.page.html", &models.TemplateData{})
+	reservations, err := m.DB.AllReservations()
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	data := make(map[string]interface{})
+	data["reservations"] = reservations
+
+	render.Template(w, r, "admin-all-reservations.page.html", &models.TemplateData{
+		Data: data,
+	})
 }
 
 //

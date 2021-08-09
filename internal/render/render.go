@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"time"
 
 	"github.com/justinas/nosurf"
 	"github.com/yj-matmul/bookings/internal/config"
@@ -15,7 +16,9 @@ import (
 )
 
 // implement custom function when go lang have no built-in function I want to
-var functions = template.FuncMap{}
+var functions = template.FuncMap{
+	"humanDate": HumanDate,
+}
 var pathToTemplates = "./templates"
 
 var app *config.AppConfig
@@ -23,6 +26,11 @@ var app *config.AppConfig
 // NewRenderer sets the config for the template package
 func NewRenderer(a *config.AppConfig) {
 	app = a
+}
+
+// HumanDate returns time in YYYY-MM-DD
+func HumanDate(t time.Time) string {
+	return t.Format("2006-01-02")
 }
 
 // AddDefaultData sets default template data for all templates
