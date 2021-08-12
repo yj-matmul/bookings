@@ -17,11 +17,19 @@ import (
 
 // implement custom function when go lang have no built-in function I want to
 var functions = template.FuncMap{
-	"humanDate": HumanDate,
+	"humanDate":  HumanDate,
+	"formatDate": FormatDate,
+	"iterate":    Iterate,
+	"add":        Add,
 }
 var pathToTemplates = "./templates"
 
 var app *config.AppConfig
+
+// Add
+func Add(a, b int) int {
+	return a + b
+}
 
 // NewRenderer sets the config for the template package
 func NewRenderer(a *config.AppConfig) {
@@ -31,6 +39,22 @@ func NewRenderer(a *config.AppConfig) {
 // HumanDate returns time in YYYY-MM-DD
 func HumanDate(t time.Time) string {
 	return t.Format("2006-01-02")
+}
+
+// Iterate returns a slice of ints, starting at 1, going to count
+func Iterate(count int) []int {
+	var items []int
+
+	for i := 1; i <= count; i++ {
+		items = append(items, i)
+	}
+
+	return items
+}
+
+// FormatDate returns time in layout
+func FormatDate(t time.Time, layout string) string {
+	return t.Format(layout)
 }
 
 // AddDefaultData sets default template data for all templates
