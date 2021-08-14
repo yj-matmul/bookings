@@ -27,6 +27,9 @@
 
         <form method="POST" action="/admin/reservations-calendar">
             <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <input type="hidden" name="m" value="{{$curMonth}}">
+            <input type="hidden" name="y" value="{{$curYear}}">
+            
             {{range $rooms}}
                 {{$roomID := .ID}}
                 {{$blocks := index $.Data (printf "block_map_%d" .ID)}}
@@ -55,7 +58,9 @@
                                         name="remove_block_{{$roomID}}_{{(printf "%s-%s-%d" $curYear $curMonth $index)}}"
                                         value="{{index $blocks (printf "%s-%s-%d" $curYear $curMonth $index)}}">
                                     {{else}}
-                                        <input type="checkbox">
+                                        <input type="checkbox"
+                                        name="add_block_{{$roomID}}_{{(printf "%s-%s-%d" $curYear $curMonth $index)}}"
+                                        value="1">
                                     {{end}}
                                 {{end}}
                                     
