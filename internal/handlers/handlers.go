@@ -710,6 +710,39 @@ func (m *Repository) AdminPostReservationsCalendar(w http.ResponseWriter, r *htt
 	month, _ := strconv.Atoi(r.Form.Get("m"))
 
 	// process blocks
+	data := make(map[string]interface{})
+
+	location := time.Now().Location()
+	firstOfMonth := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, location)
+	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+
+	rooms, err := m.DB.AllRooms()
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	for _, room := range rooms {
+		blockMap := make(map[string]int)
+		for d := firstOfMonth; !d.After(lastOfMonth); d = d.AddDate(0, 0, 1) {
+			blockMap[d.Format("2006-01-2")] = 0
+		}
+
+		// get all the restrictions for the current room
+		restrictions, err := m.DB.GetRestrictionsForRoomByDate(room.ID, firstOfMonth, lastOfMonth)
+		if err != nil {
+			helpers.ServerError(w, err)
+			return
+		}
+
+		for _, restriction := range restrictions {
+			if restriction.ReservationID == 0 {
+				blockMap[restriction.StartDate.Format("2006-01-2")] = restriction.ID
+			}
+		}
+
+		data[fmt.Sprintf("block_map_%d", room.ID)] = blockMap
+	}
 
 	m.App.Session.Put(r.Context(), "flash", "Changes saved")
 	http.Redirect(w, r, fmt.Sprintf("/admin/reservations-calendar?y=%d&m=%d", year, month), http.StatusSeeOther)
