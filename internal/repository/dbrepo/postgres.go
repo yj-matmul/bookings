@@ -510,7 +510,7 @@ func (m *postgresDBRepo) GetRestrictionsForRoomByDate(roomID int, start, end tim
 		err = rows.Scan(
 			&r.ID,
 			&r.ReservationID,
-			&r.ReservationID,
+			&r.RestrictionID,
 			&r.RoomID,
 			&r.StartDate,
 			&r.EndDate,
