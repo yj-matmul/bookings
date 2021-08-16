@@ -718,6 +718,7 @@ func (m *Repository) AdminPostReservationsCalendar(w http.ResponseWriter, r *htt
 
 	form := forms.New(r.PostForm)
 
+	// delete existing blocks
 	for _, room := range rooms {
 		curMap := m.App.Session.Get(r.Context(), fmt.Sprintf("block_map_%d", room.ID)).(map[string]int)
 
@@ -726,7 +727,7 @@ func (m *Repository) AdminPostReservationsCalendar(w http.ResponseWriter, r *htt
 				if val > 0 {
 					if !form.Has(fmt.Sprintf("remove_block_%d_%s", room.ID, name)) {
 						// delete the room restriction by id
-						log.Println("would delete block", value)
+						m.DB.DeleteBlockByID(value)
 					}
 				}
 			}
@@ -739,7 +740,8 @@ func (m *Repository) AdminPostReservationsCalendar(w http.ResponseWriter, r *htt
 			exploded := strings.Split(name, "_")
 			roomID, _ := strconv.Atoi(exploded[2])
 			// insert a new block
-			log.Println("would insert a block for room id", roomID, "for date", exploded[3])
+			t, _ := time.Parse("2006-01-2", exploded[3])
+			m.DB.InsertBlockForRoom(roomID, t)
 		}
 	}
 
