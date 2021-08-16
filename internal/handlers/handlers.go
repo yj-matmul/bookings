@@ -652,7 +652,7 @@ func (m *Repository) AdminReservationsCalendar(w http.ResponseWriter, r *http.Re
 		for _, restriction := range restrictions {
 			if restriction.ReservationID > 0 {
 				// it's a reservation
-				for d := restriction.StartDate; !d.After(restriction.EndDate); d = d.AddDate(0, 0, 1) {
+				for d := restriction.StartDate; !d.After(restriction.EndDate.AddDate(0, 0, -1)); d = d.AddDate(0, 0, 1) {
 					reservaitonMap[d.Format("2006-01-2")] = restriction.ReservationID
 				}
 			} else {
@@ -710,38 +710,37 @@ func (m *Repository) AdminPostReservationsCalendar(w http.ResponseWriter, r *htt
 	month, _ := strconv.Atoi(r.Form.Get("m"))
 
 	// process blocks
-	data := make(map[string]interface{})
-
-	location := time.Now().Location()
-	firstOfMonth := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, location)
-	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
-
 	rooms, err := m.DB.AllRooms()
 	if err != nil {
 		helpers.ServerError(w, err)
 		return
 	}
 
+	form := forms.New(r.PostForm)
+
 	for _, room := range rooms {
-		blockMap := make(map[string]int)
-		for d := firstOfMonth; !d.After(lastOfMonth); d = d.AddDate(0, 0, 1) {
-			blockMap[d.Format("2006-01-2")] = 0
-		}
+		curMap := m.App.Session.Get(r.Context(), fmt.Sprintf("block_map_%d", room.ID)).(map[string]int)
 
-		// get all the restrictions for the current room
-		restrictions, err := m.DB.GetRestrictionsForRoomByDate(room.ID, firstOfMonth, lastOfMonth)
-		if err != nil {
-			helpers.ServerError(w, err)
-			return
-		}
-
-		for _, restriction := range restrictions {
-			if restriction.ReservationID == 0 {
-				blockMap[restriction.StartDate.Format("2006-01-2")] = restriction.ID
+		for name, value := range curMap {
+			if val, ok := curMap[name]; ok {
+				if val > 0 {
+					if !form.Has(fmt.Sprintf("remove_block_%d_%s", room.ID, name)) {
+						// delete the room restriction by id
+						log.Println("would delete block", value)
+					}
+				}
 			}
 		}
+	}
 
-		data[fmt.Sprintf("block_map_%d", room.ID)] = blockMap
+	// handle new blocks
+	for name, _ := range r.PostForm {
+		if strings.HasPrefix(name, "add_block") {
+			exploded := strings.Split(name, "_")
+			roomID, _ := strconv.Atoi(exploded[2])
+			// insert a new block
+			log.Println("would insert a block for room id", roomID, "for date", exploded[3])
+		}
 	}
 
 	m.App.Session.Put(r.Context(), "flash", "Changes saved")
