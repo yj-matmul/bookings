@@ -23,7 +23,38 @@ import (
 var app config.AppConfig
 var session *scs.SessionManager
 var pathToTemplates = "./../../templates"
-var functions = template.FuncMap{}
+var functions = template.FuncMap{
+	"humanDate":  HumanDate,
+	"formatDate": FormatDate,
+	"iterate":    Iterate,
+	"add":        Add,
+}
+
+// Add
+func Add(a, b int) int {
+	return a + b
+}
+
+// HumanDate returns time in YYYY-MM-DD
+func HumanDate(t time.Time) string {
+	return t.Format("2006-01-02")
+}
+
+// Iterate returns a slice of ints, starting at 1, going to count
+func Iterate(count int) []int {
+	var items []int
+
+	for i := 1; i <= count; i++ {
+		items = append(items, i)
+	}
+
+	return items
+}
+
+// FormatDate returns time in layout
+func FormatDate(t time.Time, layout string) string {
+	return t.Format(layout)
+}
 
 func TestMain(m *testing.M) {
 	// what am I going to put in the session
@@ -100,6 +131,10 @@ func getRoutes() http.Handler {
 	mux.Get("/reservation-summary", Repo.ReservationSummary)
 
 	mux.Get("/contact", Repo.Contact)
+
+	mux.Get("/user/login", Repo.ShowLogin)
+	mux.Post("/user/login", Repo.PostShowLogin)
+	mux.Get("/user/logout", Repo.Logout)
 
 	fileServer := http.FileServer(http.Dir("./static/"))
 	mux.Handle("/static/*", http.StripPrefix("/static", fileServer))

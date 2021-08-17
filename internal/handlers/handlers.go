@@ -151,7 +151,7 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 	if !form.Valid() {
 		data := make(map[string]interface{})
 		data["reservation"] = reservation
-		// http.Error(w, "my own error message", http.StatusSeeOther)
+		http.Error(w, "my own error message", http.StatusSeeOther)
 		render.Template(w, r, "make-reservation.page.html", &models.TemplateData{
 			Form: form,
 			Data: data,
@@ -459,6 +459,7 @@ func (m *Repository) PostShowLogin(w http.ResponseWriter, r *http.Request) {
 		render.Template(w, r, "login.page.html", &models.TemplateData{
 			Form: form,
 		})
+		log.Println(1)
 		return
 	}
 

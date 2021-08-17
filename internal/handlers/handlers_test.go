@@ -33,6 +33,7 @@ var theTests = []struct {
 	{"majors-suite", "/majors-suite", "GET", http.StatusOK},
 	{"search-availability", "/search-availability", "GET", http.StatusOK},
 	{"contact", "/contact", "GET", http.StatusOK},
+	{"show-login", "/user/login", "GET", http.StatusOK},
 
 	// {"post-search-avail", "/search-availability", "POST", []postData{
 	// 	{key: "start", value: "2022-01-01"},
@@ -526,6 +527,24 @@ func TestRepository_BookRoom(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 	if rr.Code != http.StatusTemporaryRedirect {
 		t.Errorf("BookRoom handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusTemporaryRedirect)
+	}
+}
+
+func TestRepository_PostShowLogin(t *testing.T) {
+	reqBody := "email=adm@adm.com"
+	reqBody = fmt.Sprintf("%s&%s", reqBody, "password=book")
+
+	req, _ := http.NewRequest("POST", "/user/login", strings.NewReader(reqBody))
+	ctx := getCtx(req)
+	req = req.WithContext(ctx)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rr := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(Repo.PostShowLogin)
+
+	handler.ServeHTTP(rr, req)
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("PostShowLogin handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusTemporaryRedirect)
 	}
 }
 
