@@ -565,10 +565,12 @@ var loginTests = []struct {
 	expectedLocation   string
 }{
 	{"normal-credentials", "adm@adm.com", http.StatusSeeOther, "", "/"},
+	{"short id", "ad", http.StatusOK, "", "/user/login"},
 }
 
 func TestLogin(t *testing.T) {
-	for _, e := range loginTests {
+	for i, e := range loginTests {
+		log.Println(i, i)
 		postedData := url.Values{}
 		postedData.Add("email", e.email)
 		postedData.Add("password", "book")
