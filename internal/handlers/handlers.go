@@ -442,9 +442,6 @@ func (m *Repository) PostShowLogin(w http.ResponseWriter, r *http.Request) {
 
 	err := r.ParseForm()
 	if err != nil {
-		// m.App.Session.Put(r.Context(), "error", "can't parse login form")
-		// http.Redirect(w, r, "/user/login", http.StatusSeeOther)
-		// return
 		log.Println(err)
 	}
 
@@ -458,7 +455,6 @@ func (m *Repository) PostShowLogin(w http.ResponseWriter, r *http.Request) {
 		render.Template(w, r, "login.page.html", &models.TemplateData{
 			Form: form,
 		})
-		log.Println(1)
 		return
 	}
 

@@ -88,7 +88,7 @@ func (m *testDBRepo) Authenticate(email, testPassword string) (int, string, erro
 		return 0, "", errors.New("some error")
 	}
 
-	return 0, "", nil
+	return 1, "", nil
 }
 
 // AllReservations returns a slice of all reservations

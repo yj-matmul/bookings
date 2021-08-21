@@ -539,24 +539,6 @@ func TestRepository_BookRoom(t *testing.T) {
 	}
 }
 
-func TestRepository_PostShowLogin(t *testing.T) {
-	reqBody := "email=adm@adm.com"
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "password=book")
-
-	req, _ := http.NewRequest("POST", "/user/login", strings.NewReader(reqBody))
-	ctx := getCtx(req)
-	req = req.WithContext(ctx)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	rr := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(Repo.PostShowLogin)
-
-	handler.ServeHTTP(rr, req)
-	if rr.Code != http.StatusSeeOther {
-		t.Errorf("PostShowLogin handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusSeeOther)
-	}
-}
-
 var loginTests = []struct {
 	name               string
 	email              string
@@ -565,12 +547,12 @@ var loginTests = []struct {
 	expectedLocation   string
 }{
 	{"normal-credentials", "adm@adm.com", http.StatusSeeOther, "", "/"},
-	{"short id", "ad", http.StatusOK, "", "/user/login"},
+	{"invaid-credentials", "ad@adm.co.kr", http.StatusSeeOther, "", "/user/login"},
+	{"invalid-data", "j", http.StatusOK, `action="/user/login"`, ""},
 }
 
 func TestLogin(t *testing.T) {
-	for i, e := range loginTests {
-		log.Println(i, i)
+	for _, e := range loginTests {
 		postedData := url.Values{}
 		postedData.Add("email", e.email)
 		postedData.Add("password", "book")
