@@ -78,50 +78,61 @@ func TestHandlers(t *testing.T) {
 	}
 }
 
+// test data for the TestRepository_Reservation handler
+var reservationTests = []struct {
+	name               string
+	reservation        models.Reservation
+	expectedStatusCode int
+	expectedHTML       string
+	expectedLocation   string
+}{
+	{
+		name:               "reservation-in-session",
+		reservation:        models.Reservation{RoomID: 1, Room: models.Room{ID: 1, RoomName: "General's Quarters"}},
+		expectedStatusCode: http.StatusOK, expectedHTML: `action="/make-reservation"`,
+	},
+	{
+		name:               "reservation-not-in-session",
+		reservation:        models.Reservation{},
+		expectedStatusCode: http.StatusSeeOther, expectedLocation: "/",
+	},
+	{
+		name:               "non-existent-room",
+		reservation:        models.Reservation{RoomID: 100, Room: models.Room{ID: 100, RoomName: ""}},
+		expectedStatusCode: http.StatusSeeOther, expectedLocation: "/",
+	},
+}
+
 func TestRepository_Reservation(t *testing.T) {
-	reservation := models.Reservation{
-		RoomID: 1,
-		Room: models.Room{
-			ID:       1,
-			RoomName: "General's Quarters",
-		},
-	}
+	for _, e := range reservationTests {
+		req, _ := http.NewRequest("GET", "/make-reservation", nil)
+		ctx := getCtx(req)
+		req = req.WithContext(ctx)
+		rr := httptest.NewRecorder()
+		if e.reservation.RoomID > 0 {
+			session.Put(ctx, "reservation", e.reservation)
+		}
 
-	req, _ := http.NewRequest("GET", "/make-reservation", nil)
-	ctx := getCtx(req)
-	req = req.WithContext(ctx)
-	rr := httptest.NewRecorder()
-	session.Put(ctx, "reservation", reservation)
+		handler := http.HandlerFunc(Repo.Reservation)
+		handler.ServeHTTP(rr, req)
 
-	handler := http.HandlerFunc(Repo.Reservation)
+		if rr.Code != e.expectedStatusCode {
+			t.Errorf("%s returned wrong response code: got %d, wanted %d", e.name, rr.Code, e.expectedStatusCode)
+		}
 
-	handler.ServeHTTP(rr, req)
-	if rr.Code != http.StatusOK {
-		t.Errorf("Reservation normal returned wrong response code: got %d, wanted %d", rr.Code, http.StatusOK)
-	}
+		if e.expectedLocation != "" {
+			actualLoc, _ := rr.Result().Location()
+			if actualLoc.String() != e.expectedLocation {
+				t.Errorf("failed %s: expected loaction %s, but got %s", e.name, e.expectedLocation, actualLoc.String())
+			}
+		}
 
-	// test case where reservation is not in session (reset everything)
-	req, _ = http.NewRequest("GET", "/make-reservation", nil)
-	ctx = getCtx(req)
-	req = req.WithContext(ctx)
-	rr = httptest.NewRecorder()
-
-	handler.ServeHTTP(rr, req)
-	if rr.Code != http.StatusSeeOther {
-		t.Errorf("Reservation session error returned wrong response code: got %d, wanted %d", rr.Code, http.StatusOK)
-	}
-
-	// test with non-existent room
-	req, _ = http.NewRequest("GET", "/make-reservation", nil)
-	ctx = getCtx(req)
-	req = req.WithContext(ctx)
-	rr = httptest.NewRecorder()
-	reservation.RoomID = 100
-	session.Put(ctx, "reservation", reservation)
-
-	handler.ServeHTTP(rr, req)
-	if rr.Code != http.StatusSeeOther {
-		t.Errorf("Reservation handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusOK)
+		if e.expectedHTML != "" {
+			html := rr.Body.String()
+			if !strings.Contains(html, e.expectedHTML) {
+				t.Errorf("failed %s: expected to find %s but did not", e.name, e.expectedHTML)
+			}
+		}
 	}
 }
 
