@@ -98,7 +98,7 @@ var reservationTests = []struct {
 	},
 	{
 		name:               "non-existent-room",
-		reservation:        models.Reservation{RoomID: 100, Room: models.Room{ID: 100, RoomName: ""}},
+		reservation:        models.Reservation{RoomID: 100000, Room: models.Room{ID: 100000, RoomName: ""}},
 		expectedStatusCode: http.StatusSeeOther, expectedLocation: "/",
 	},
 }
@@ -136,158 +136,156 @@ func TestRepository_Reservation(t *testing.T) {
 	}
 }
 
+var postReservationTests = []struct {
+	name               string
+	postedData         url.Values
+	expectedStatusCode int
+	expectedHTML       string
+	expectedLocation   string
+}{
+	{
+		name: "valid-post-reservation",
+		postedData: url.Values{
+			"start_date": {"2050-01-02"}, "end_date": {"2050-01-03"}, "first_name": {"John"},
+			"last_name": {"Smith"}, "email": {"john@smith.com"}, "phone": {"555-111"}, "room_id": {"1"},
+		},
+		expectedStatusCode: http.StatusSeeOther,
+		expectedLocation:   "/reservation-summary",
+	},
+	{
+		name:               "non-existent-post-reservation",
+		postedData:         url.Values{},
+		expectedStatusCode: http.StatusSeeOther,
+		expectedLocation:   "/",
+	},
+	{
+		name: "invalid-start-date-post-reservation",
+		postedData: url.Values{
+			"start_date": {"invalid"}, "end_date": {"2050-01-03"}, "first_name": {"John"},
+			"last_name": {"Smith"}, "email": {"john@smith.com"}, "phone": {"555-111"}, "room_id": {"1"},
+		},
+		expectedStatusCode: http.StatusSeeOther,
+		expectedLocation:   "/",
+	},
+	{
+		name: "invalid-end-date-post-reservation",
+		postedData: url.Values{
+			"start_date": {"2050-01-02"}, "end_date": {"invalid"}, "first_name": {"John"},
+			"last_name": {"Smith"}, "email": {"john@smith.com"}, "phone": {"555-111"}, "room_id": {"1"},
+		},
+		expectedStatusCode: http.StatusSeeOther,
+		expectedLocation:   "/",
+	},
+	{
+		name: "invalid-room-id-post-reservation",
+		postedData: url.Values{
+			"start_date": {"2050-01-02"}, "end_date": {"2050-01-03"}, "first_name": {"John"},
+			"last_name": {"Smith"}, "email": {"john@smith.com"}, "phone": {"555-111"}, "room_id": {"invalid"},
+		},
+		expectedStatusCode: http.StatusSeeOther,
+		expectedLocation:   "/",
+	},
+	{
+		name: "invalid-room-data-post-reservation",
+		postedData: url.Values{
+			"start_date": {"2050-01-02"}, "end_date": {"2050-01-03"}, "first_name": {"John"},
+			"last_name": {"Smith"}, "email": {"john@smith.com"}, "phone": {"555-111"}, "room_id": {"100000"},
+		},
+		expectedStatusCode: http.StatusSeeOther,
+		expectedLocation:   "/",
+	},
+	{
+		name: "missing-first-name-post-reservation",
+		postedData: url.Values{
+			"start_date": {"2050-01-02"}, "end_date": {"2050-01-03"}, "first_name": {""},
+			"last_name": {"Smith"}, "email": {"john@smith.com"}, "phone": {"555-111"}, "room_id": {"1"},
+		},
+		expectedStatusCode: http.StatusOK,
+		expectedHTML:       `action="/make-reservation"`,
+	},
+	{
+		name: "missing-last-name-post-reservation",
+		postedData: url.Values{
+			"start_date": {"2050-01-02"}, "end_date": {"2050-01-03"}, "first_name": {"John"},
+			"last_name": {""}, "email": {"john@smith.com"}, "phone": {"555-111"}, "room_id": {"1"},
+		},
+		expectedStatusCode: http.StatusOK,
+		expectedHTML:       `action="/make-reservation"`,
+	},
+	{
+		name: "missing-email-post-reservation",
+		postedData: url.Values{
+			"start_date": {"2050-01-02"}, "end_date": {"2050-01-03"}, "first_name": {"John"},
+			"last_name": {"Smith"}, "email": {""}, "phone": {"555-111"}, "room_id": {"1"},
+		},
+		expectedStatusCode: http.StatusOK,
+		expectedHTML:       `action="/make-reservation"`,
+	},
+	{
+		name: "short-first-name-post-reservation",
+		postedData: url.Values{
+			"start_date": {"2050-01-02"}, "end_date": {"2050-01-03"}, "first_name": {"J"},
+			"last_name": {"Smith"}, "email": {"john@smith.com"}, "phone": {"555-111"}, "room_id": {"1"},
+		},
+		expectedStatusCode: http.StatusOK,
+		expectedHTML:       `action="/make-reservation"`,
+	},
+	{
+		name: "invalid-email-post-reservation",
+		postedData: url.Values{
+			"start_date": {"2050-01-02"}, "end_date": {"2050-01-03"}, "first_name": {"John"},
+			"last_name": {"Smith"}, "email": {"invalid"}, "phone": {"555-111"}, "room_id": {"1"},
+		},
+		expectedStatusCode: http.StatusOK,
+		expectedHTML:       `action="/make-reservation"`,
+	},
+	{
+		name: "database-insert--fail-reservation-post-reservation",
+		postedData: url.Values{
+			"start_date": {"2050-01-02"}, "end_date": {"2050-01-03"}, "first_name": {"John"},
+			"last_name": {"Smith"}, "email": {"john@smith.com"}, "phone": {"555-111"}, "room_id": {"10000"},
+		},
+		expectedStatusCode: http.StatusSeeOther,
+		expectedLocation:   "/",
+	},
+	{
+		name: "database-insert--fail-room-restriction-post-reservation",
+		postedData: url.Values{
+			"start_date": {"2050-01-02"}, "end_date": {"2050-01-03"}, "first_name": {"John"},
+			"last_name": {"Smith"}, "email": {"john@smith.com"}, "phone": {"555-111"}, "room_id": {"10001"},
+		},
+		expectedStatusCode: http.StatusSeeOther,
+		expectedLocation:   "/",
+	},
+}
+
 func TestRepository_PostReservation(t *testing.T) {
-	postedData := url.Values{}
-	postedData.Add("start_date", "2050-01-02")
-	postedData.Add("end_date", "2050-01-03")
-	postedData.Add("first_name", "John")
-	postedData.Add("last_name", "Smith")
-	postedData.Add("email", "john@smith.com")
-	postedData.Add("phone", "555-555-5555")
-	postedData.Add("room_id", "1")
+	for _, e := range postReservationTests {
+		req, _ := http.NewRequest("POST", "/make-reservation", strings.NewReader(e.postedData.Encode()))
+		ctx := getCtx(req)
+		req = req.WithContext(ctx)
+		req.Header.Set("Content-type", "application/x-www-form-urlencoded")
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(Repo.PostReservation)
+		handler.ServeHTTP(rr, req)
 
-	req, _ := http.NewRequest("POST", "/make-reservation", strings.NewReader(postedData.Encode()))
-	ctx := getCtx(req)
-	req = req.WithContext(ctx)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	rr := httptest.NewRecorder()
+		if e.expectedStatusCode != rr.Code {
+			t.Errorf("%s returned wrong response code: got %d, wanted %d", e.name, rr.Code, e.expectedStatusCode)
+		}
 
-	handler := http.HandlerFunc(Repo.PostReservation)
-	handler.ServeHTTP(rr, req)
-	if rr.Code != http.StatusSeeOther {
-		t.Errorf("PostReservation handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusSeeOther)
-	}
+		if e.expectedLocation != "" {
+			actualLoc, _ := rr.Result().Location()
+			if actualLoc.String() != e.expectedLocation {
+				t.Errorf("failed %s: expected loaction %s, but got %s", e.name, e.expectedLocation, actualLoc.String())
+			}
+		}
 
-	// test for missing post body
-	req, _ = http.NewRequest("POST", "/make-reservation", nil)
-	ctx = getCtx(req)
-	req = req.WithContext(ctx)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	rr = httptest.NewRecorder()
-
-	handler.ServeHTTP(rr, req)
-	if rr.Code != http.StatusSeeOther {
-		t.Errorf("PostReservation handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusSeeOther)
-	}
-
-	// test for invalid start date
-	reqBody := "start_date=invalid"
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "end_date=2050-01-02")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "first_name=John")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "last_name=Smith")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "email=john@smith.com")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "phone=123456789")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "room_id=1")
-
-	req, _ = http.NewRequest("POST", "/make-reservation", strings.NewReader(reqBody))
-	ctx = getCtx(req)
-	req = req.WithContext(ctx)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	rr = httptest.NewRecorder()
-
-	handler.ServeHTTP(rr, req)
-	if rr.Code != http.StatusSeeOther {
-		t.Errorf("PostReservation handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusSeeOther)
-	}
-
-	// test for invalid end date
-	reqBody = "start_date=2050-01-01"
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "end_date=invalid")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "first_name=John")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "last_name=Smith")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "email=john@smith.com")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "phone=123456789")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "room_id=1")
-
-	req, _ = http.NewRequest("POST", "/make-reservation", strings.NewReader(reqBody))
-	ctx = getCtx(req)
-	req = req.WithContext(ctx)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	rr = httptest.NewRecorder()
-
-	handler.ServeHTTP(rr, req)
-	if rr.Code != http.StatusSeeOther {
-		t.Errorf("PostReservation handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusSeeOther)
-	}
-
-	// test for invalid room id
-	reqBody = "start_date=2050-01-01"
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "end_date=2050-01-02")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "first_name=John")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "last_name=Smith")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "email=john@smith.com")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "phone=123456789")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "room_id=invalid")
-
-	req, _ = http.NewRequest("POST", "/make-reservation", strings.NewReader(reqBody))
-	ctx = getCtx(req)
-	req = req.WithContext(ctx)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	rr = httptest.NewRecorder()
-
-	handler.ServeHTTP(rr, req)
-	if rr.Code != http.StatusSeeOther {
-		t.Errorf("PostReservation handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusSeeOther)
-	}
-
-	// test for invalid data
-	reqBody = "start_date=2050-01-01"
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "end_date=2050-01-02")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "first_name=J")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "last_name=Smith")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "email=john@smith.com")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "phone=123456789")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "room_id=1")
-
-	req, _ = http.NewRequest("POST", "/make-reservation", strings.NewReader(reqBody))
-	ctx = getCtx(req)
-	req = req.WithContext(ctx)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	rr = httptest.NewRecorder()
-
-	handler.ServeHTTP(rr, req)
-	if rr.Code != http.StatusOK {
-		t.Errorf("PostReservation handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusOK)
-	}
-
-	// test for failure to insert reservation into database
-	reqBody = "start_date=2050-01-01"
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "end_date=2050-01-02")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "first_name=John")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "last_name=Smith")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "email=john@smith.com")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "phone=123456789")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "room_id=10000")
-
-	req, _ = http.NewRequest("POST", "/make-reservation", strings.NewReader(reqBody))
-	ctx = getCtx(req)
-	req = req.WithContext(ctx)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	rr = httptest.NewRecorder()
-
-	handler.ServeHTTP(rr, req)
-	if rr.Code != http.StatusSeeOther {
-		t.Errorf("PostReservation handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusSeeOther)
-	}
-
-	// test for failure to insert restriction into database
-	reqBody = "start_date=2050-01-01"
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "end_date=2050-01-02")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "first_name=John")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "last_name=Smith")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "email=john@smith.com")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "phone=123456789")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "room_id=10001")
-
-	req, _ = http.NewRequest("POST", "/make-reservation", strings.NewReader(reqBody))
-	ctx = getCtx(req)
-	req = req.WithContext(ctx)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	rr = httptest.NewRecorder()
-
-	handler.ServeHTTP(rr, req)
-	if rr.Code != http.StatusSeeOther {
-		t.Errorf("PostReservation handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusSeeOther)
+		if e.expectedHTML != "" {
+			html := rr.Body.String()
+			if !strings.Contains(html, e.expectedHTML) {
+				t.Errorf("failed %s: expected to find %s but did not", e.name, e.expectedHTML)
+			}
+		}
 	}
 }
 
