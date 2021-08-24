@@ -595,6 +595,7 @@ func TestLogin(t *testing.T) {
 
 		handler := http.HandlerFunc(Repo.PostShowLogin)
 		handler.ServeHTTP(rr, req)
+
 		if rr.Code != e.expectedStatusCode {
 			t.Errorf("failed %s: expected code %d, but got %d", e.name, e.expectedStatusCode, rr.Code)
 		}
@@ -609,6 +610,70 @@ func TestLogin(t *testing.T) {
 
 		if e.expectedHTML != "" {
 			// read the response body into a string
+			html := rr.Body.String()
+			if !strings.Contains(html, e.expectedHTML) {
+				t.Errorf("failed %s: expected to find %s, but did not", e.name, e.expectedHTML)
+			}
+		}
+	}
+}
+
+var adminPostShowReservationTests = []struct {
+	name               string
+	url                string
+	postedData         url.Values
+	expectedStatusCode int
+	expectedHTML       string
+	expectedLocation   string
+}{
+	{
+		name: "valid-data-from-new", url: "/admin/reservations/new/1",
+		postedData:         url.Values{"first_name": {"John"}, "last_name": {"Smith"}, "email": {"john@smi.com"}, "phone": {"555"}},
+		expectedStatusCode: http.StatusSeeOther, expectedLocation: "/admin/reservations-new",
+	},
+	{
+		name: "valid-data-from-all", url: "/admin/reservations/all/1",
+		postedData:         url.Values{"first_name": {"John"}, "last_name": {"Smith"}, "email": {"john@smi.com"}, "phone": {"555"}},
+		expectedStatusCode: http.StatusSeeOther, expectedLocation: "/admin/reservations-all",
+	},
+	{
+		name: "valid-data-from-cal", url: "/admin/reservations/cal/1",
+		postedData: url.Values{
+			"first_name": {"John"}, "last_name": {"Smith"}, "email": {"john@smi.com"}, "phone": {"555"},
+			"year": {"2050"}, "month": {"01"}},
+		expectedStatusCode: http.StatusSeeOther, expectedLocation: "/admin/reservations-calendar?y=2050&m=01",
+	},
+}
+
+func TestAdminPostShowReservation(t *testing.T) {
+	for _, e := range adminPostShowReservationTests {
+		var req *http.Request
+		if e.postedData != nil {
+			req, _ = http.NewRequest("POST", e.url, strings.NewReader(e.postedData.Encode()))
+		} else {
+			req, _ = http.NewRequest("POST", e.url, nil)
+		}
+		ctx := getCtx(req)
+		req = req.WithContext(ctx)
+		req.RequestURI = e.url
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		rr := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(Repo.AdminPostShowReservation)
+		handler.ServeHTTP(rr, req)
+
+		if rr.Code != e.expectedStatusCode {
+			t.Errorf("failed %s: expected code %d, but got %d", e.name, e.expectedStatusCode, rr.Code)
+		}
+
+		if e.expectedLocation != "" {
+			actualLoc, _ := rr.Result().Location()
+			if actualLoc.String() != e.expectedLocation {
+				t.Errorf("failed %s: expected location %s, but got %s", e.name, e.expectedLocation, actualLoc.String())
+			}
+		}
+
+		if e.expectedHTML != "" {
 			html := rr.Body.String()
 			if !strings.Contains(html, e.expectedHTML) {
 				t.Errorf("failed %s: expected to find %s, but did not", e.name, e.expectedHTML)
