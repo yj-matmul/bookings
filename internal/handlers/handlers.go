@@ -394,6 +394,7 @@ func (m *Repository) ChooseRoom(w http.ResponseWriter, r *http.Request) {
 	exploded := strings.Split(r.RequestURI, "/")
 	roomID, err := strconv.Atoi(exploded[2])
 	if err != nil {
+		log.Println(1)
 		m.App.Session.Put(r.Context(), "error", "missing url parameter!")
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return

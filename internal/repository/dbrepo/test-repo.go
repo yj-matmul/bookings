@@ -34,7 +34,7 @@ func (m *testDBRepo) SearchAvailabilityByDatesByRoomID(start, end time.Time, roo
 	if roomID == 10000 {
 		return false, errors.New("some error")
 	}
-	return false, nil
+	return true, nil
 }
 
 // SearchAvailabilityForAllRooms returns a slice of available rooms, if any, for given date range

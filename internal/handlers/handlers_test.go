@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -154,7 +153,7 @@ var postReservationTests = []struct {
 	},
 	{
 		name:               "non-existent-post-reservation",
-		postedData:         url.Values{},
+		postedData:         nil,
 		expectedStatusCode: http.StatusSeeOther,
 		expectedLocation:   "/",
 	},
@@ -261,7 +260,12 @@ var postReservationTests = []struct {
 
 func TestRepository_PostReservation(t *testing.T) {
 	for _, e := range postReservationTests {
-		req, _ := http.NewRequest("POST", "/make-reservation", strings.NewReader(e.postedData.Encode()))
+		var req *http.Request
+		if e.postedData != nil {
+			req, _ = http.NewRequest("POST", "/make-reservation", strings.NewReader(e.postedData.Encode()))
+		} else {
+			req, _ = http.NewRequest("POST", "/make-reservation", nil)
+		}
 		ctx := getCtx(req)
 		req = req.WithContext(ctx)
 		req.Header.Set("Content-type", "application/x-www-form-urlencoded")
@@ -327,7 +331,7 @@ func TestRepository_ReservationSummary(t *testing.T) {
 		rr := httptest.NewRecorder()
 
 		if e.reservation.RoomID > 0 {
-			session.Put(req.Context(), "reservation", e.reservation)
+			session.Put(ctx, "reservation", e.reservation)
 		}
 
 		handler := http.HandlerFunc(Repo.ReservationSummary)
@@ -365,7 +369,7 @@ var postAvailbilityTests = []struct {
 		expectedStatusCode: http.StatusOK, expectedHTML: `Choose a Room`,
 	},
 	{
-		name: "empty-postdata-post-availability", postedData: url.Values{},
+		name: "empty-postdata-post-availability", postedData: nil,
 		expectedStatusCode: http.StatusSeeOther, expectedLocation: "/",
 	},
 	{
@@ -388,7 +392,12 @@ var postAvailbilityTests = []struct {
 
 func TestRepository_PostAvailability(t *testing.T) {
 	for _, e := range postAvailbilityTests {
-		req, _ := http.NewRequest("POST", "/search-availability", strings.NewReader(e.postedData.Encode()))
+		var req *http.Request
+		if e.postedData != nil {
+			req, _ = http.NewRequest("POST", "/search-availability", strings.NewReader(e.postedData.Encode()))
+		} else {
+			req, _ = http.NewRequest("POST", "/search-availability", nil)
+		}
 		ctx := getCtx(req)
 		req = req.WithContext(ctx)
 		req.Header.Set("Content-type", "application/x-www-form-urlencoded")
@@ -416,102 +425,104 @@ func TestRepository_PostAvailability(t *testing.T) {
 	}
 }
 
+var availabilityJsonTests = []struct {
+	name       string
+	postedData url.Values
+	expectedOK bool
+}{
+	{
+		name:       "valid-availability-json",
+		postedData: url.Values{"start": {"2050-01-02"}, "end": {"2050-01-03"}, "room_id": {"1"}},
+		expectedOK: true,
+	},
+	{
+		name:       "empty-availability-json",
+		postedData: nil,
+		expectedOK: false,
+	},
+	{
+		name:       "no-left-room-availability-json",
+		postedData: url.Values{"start": {"2050-01-02"}, "end": {"2050-01-03"}, "room_id": {"10000"}},
+		expectedOK: false,
+	},
+}
+
 func TestRepository_AvailabilityJson(t *testing.T) {
-	reqBody := "start=2050-01-02"
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "end=2050-01-03")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "room_id=1")
+	for _, e := range availabilityJsonTests {
+		var req *http.Request
+		if e.postedData != nil {
+			req, _ = http.NewRequest("POST", "/search-availability-json", strings.NewReader(e.postedData.Encode()))
+		} else {
+			req, _ = http.NewRequest("POST", "/search-availability-json", nil)
+		}
+		ctx := getCtx(req)
+		req = req.WithContext(ctx)
+		req.Header.Set("Content-type", "application/x-www-form-urlencoded")
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(Repo.AvailabilityJSON)
+		handler.ServeHTTP(rr, req)
 
-	req, _ := http.NewRequest("POST", "/search-availability-json", strings.NewReader(reqBody))
-	ctx := getCtx(req)
-	req = req.WithContext(ctx)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	rr := httptest.NewRecorder()
+		var j jsonResponse
+		err := json.Unmarshal([]byte(rr.Body.Bytes()), &j)
+		if err != nil {
+			t.Error("failed to parse json")
+		}
 
-	handler := http.HandlerFunc(Repo.AvailabilityJSON)
-
-	handler.ServeHTTP(rr, req)
-
-	var j jsonResponse
-	err := json.Unmarshal([]byte(rr.Body.Bytes()), &j)
-	if err != nil {
-		t.Error("failed to parse json")
-	}
-
-	// test for empty form
-	req, _ = http.NewRequest("POST", "/search-availability-json", nil)
-	ctx = getCtx(req)
-	req = req.WithContext(ctx)
-	rr = httptest.NewRecorder()
-
-	handler.ServeHTTP(rr, req)
-	err = json.Unmarshal([]byte(rr.Body.Bytes()), &j)
-	if err != nil {
-		t.Error("failed to parse json")
-	}
-
-	// test case that room is not available
-	reqBody = "start=2050-01-02"
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "end=2050-01-03")
-	reqBody = fmt.Sprintf("%s&%s", reqBody, "room_id=10000")
-
-	req, _ = http.NewRequest("POST", "/search-availability-json", strings.NewReader(reqBody))
-	ctx = getCtx(req)
-	req = req.WithContext(ctx)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	rr = httptest.NewRecorder()
-
-	handler.ServeHTTP(rr, req)
-
-	err = json.Unmarshal([]byte(rr.Body.Bytes()), &j)
-	if err != nil {
-		t.Error("failed to parse json")
+		if j.OK != e.expectedOK {
+			t.Errorf("%s: expected %v but got %v", e.name, e.expectedOK, j.OK)
+		}
 	}
 }
+
+var chooseRoomTests = []struct {
+	name               string
+	reservation        models.Reservation
+	url                string
+	expectedStatusCode int
+	expectedLocation   string
+}{
+	{
+		name:        "reservation-in-session-choose-room",
+		reservation: models.Reservation{RoomID: 1, Room: models.Room{ID: 1, RoomName: "General's Quarters"}},
+		url:         "/choose-room/1", expectedStatusCode: http.StatusSeeOther, expectedLocation: "/make-reservation",
+	},
+	{
+		name:        "reservation-not-in-session-choose-room",
+		reservation: models.Reservation{},
+		url:         "/choose-room/1", expectedStatusCode: http.StatusSeeOther, expectedLocation: "/",
+	},
+	{
+		name:        "invalid-url-choose-room",
+		reservation: models.Reservation{RoomID: 1, Room: models.Room{ID: 1, RoomName: "General's Quarters"}},
+		url:         "/choose-room/invalid", expectedStatusCode: http.StatusSeeOther, expectedLocation: "/",
+	},
+}
+
 func TestRepository_ChooseRoom(t *testing.T) {
-	reservation := models.Reservation{
-		RoomID: 1,
-		Room: models.Room{
-			ID:       1,
-			RoomName: "General's Quarters",
-		},
-	}
+	for _, e := range chooseRoomTests {
+		req, _ := http.NewRequest("GET", e.url, nil)
+		ctx := getCtx(req)
+		req = req.WithContext(ctx)
+		req.RequestURI = e.url
 
-	req, _ := http.NewRequest("GET", "/choose-room/1", nil)
-	ctx := getCtx(req)
-	req = req.WithContext(ctx)
-	req.RequestURI = "/choose-room/1"
-	rr := httptest.NewRecorder()
-	session.Put(ctx, "reservation", reservation)
+		rr := httptest.NewRecorder()
+		if e.reservation.RoomID > 0 {
+			session.Put(ctx, "reservation", e.reservation)
+		}
 
-	handler := http.HandlerFunc(Repo.ChooseRoom)
+		handler := http.HandlerFunc(Repo.ChooseRoom)
+		handler.ServeHTTP(rr, req)
 
-	handler.ServeHTTP(rr, req)
-	if rr.Code != http.StatusSeeOther {
-		t.Errorf("ChooseRoom handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusSeeOther)
-	}
+		if e.expectedStatusCode != rr.Code {
+			t.Errorf("%s returned wrong response code: got %d, wanted %d", e.name, rr.Code, e.expectedStatusCode)
+		}
 
-	// test case that has invalid url parameter
-	req, _ = http.NewRequest("GET", "/choose-room/1", nil)
-	ctx = getCtx(req)
-	req = req.WithContext(ctx)
-	req.RequestURI = "/choose-room/invalid"
-	rr = httptest.NewRecorder()
-
-	handler.ServeHTTP(rr, req)
-	if rr.Code != http.StatusSeeOther {
-		t.Errorf("ChooseRoom handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusSeeOther)
-	}
-
-	// test case that has not reservation from session
-	req, _ = http.NewRequest("GET", "/choose-room/1", nil)
-	ctx = getCtx(req)
-	req = req.WithContext(ctx)
-	req.RequestURI = "/choose-room/1"
-	rr = httptest.NewRecorder()
-
-	handler.ServeHTTP(rr, req)
-	if rr.Code != http.StatusSeeOther {
-		t.Errorf("ChooseRoom handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusSeeOther)
+		if e.expectedLocation != "" {
+			actualLoc, _ := rr.Result().Location()
+			if actualLoc.String() != e.expectedLocation {
+				t.Errorf("failed %s: expected loaction %s, but got %s", e.name, e.expectedLocation, actualLoc.String())
+			}
+		}
 	}
 }
 
