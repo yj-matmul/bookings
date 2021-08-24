@@ -130,12 +130,36 @@ func (m *testDBRepo) UpdateProcessedForReservation(id, processed int) error {
 // AllRooms returns all rooms
 func (m *testDBRepo) AllRooms() ([]models.Room, error) {
 	var rooms []models.Room
+	rooms = append(rooms, models.Room{
+		ID:       1,
+		RoomName: "General's Quarters",
+	})
 	return rooms, nil
 }
 
 // GetRestrictionsForRoomByDate returns restrictions for a room by date range
 func (m *testDBRepo) GetRestrictionsForRoomByDate(roomID int, start, end time.Time) ([]models.RoomRestriction, error) {
 	var restrictions []models.RoomRestriction
+	layout := "2006-01-02"
+	startDate1, _ := time.Parse(layout, "2050-01-02")
+	endDate1, _ := time.Parse(layout, "2050-01-03")
+	startDate2, _ := time.Parse(layout, "2050-01-04")
+	endDate2, _ := time.Parse(layout, "2050-01-05")
+	restrictions = append(restrictions, models.RoomRestriction{
+		ID:            1,
+		StartDate:     startDate1,
+		EndDate:       endDate1,
+		RoomID:        1,
+		ReservationID: 1,
+		RestrictionID: 1,
+	}, models.RoomRestriction{
+		ID:            1,
+		StartDate:     startDate2,
+		EndDate:       endDate2,
+		RoomID:        1,
+		ReservationID: 0,
+		RestrictionID: 2,
+	})
 	return restrictions, nil
 }
 

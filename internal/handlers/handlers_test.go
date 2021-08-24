@@ -627,17 +627,17 @@ var adminPostShowReservationTests = []struct {
 	expectedLocation   string
 }{
 	{
-		name: "valid-data-from-new", url: "/admin/reservations/new/1",
+		name: "valid-data-from-new-admin-post-show-res", url: "/admin/reservations/new/1",
 		postedData:         url.Values{"first_name": {"John"}, "last_name": {"Smith"}, "email": {"john@smi.com"}, "phone": {"555"}},
 		expectedStatusCode: http.StatusSeeOther, expectedLocation: "/admin/reservations-new",
 	},
 	{
-		name: "valid-data-from-all", url: "/admin/reservations/all/1",
+		name: "valid-data-from-all-admin-post-show-res", url: "/admin/reservations/all/1",
 		postedData:         url.Values{"first_name": {"John"}, "last_name": {"Smith"}, "email": {"john@smi.com"}, "phone": {"555"}},
 		expectedStatusCode: http.StatusSeeOther, expectedLocation: "/admin/reservations-all",
 	},
 	{
-		name: "valid-data-from-cal", url: "/admin/reservations/cal/1",
+		name: "valid-data-from-cal-admin-post-show-res", url: "/admin/reservations/cal/1",
 		postedData: url.Values{
 			"first_name": {"John"}, "last_name": {"Smith"}, "email": {"john@smi.com"}, "phone": {"555"},
 			"year": {"2050"}, "month": {"01"}},
@@ -671,6 +671,49 @@ func TestAdminPostShowReservation(t *testing.T) {
 			if actualLoc.String() != e.expectedLocation {
 				t.Errorf("failed %s: expected location %s, but got %s", e.name, e.expectedLocation, actualLoc.String())
 			}
+		}
+
+		if e.expectedHTML != "" {
+			html := rr.Body.String()
+			if !strings.Contains(html, e.expectedHTML) {
+				t.Errorf("failed %s: expected to find %s, but did not", e.name, e.expectedHTML)
+			}
+		}
+	}
+}
+
+var adminReservationsCalendarTests = []struct {
+	name               string
+	url                string
+	expectedStatusCode int
+	expectedHTML       string
+}{
+	{
+		name:               "valid-no-year-info-admin-res-cal",
+		url:                "/admin/reservations-calendar",
+		expectedStatusCode: http.StatusOK, expectedHTML: `action="/admin/reservations-calendar"`,
+	},
+	{
+		name:               "valid-existent-year-info-admin-res-cal",
+		url:                "/admin/reservations-calendar?y=2050&m=01",
+		expectedStatusCode: http.StatusOK, expectedHTML: `action="/admin/reservations-calendar"`,
+	},
+}
+
+func TestAdminReservationsCalendar(t *testing.T) {
+	for _, e := range adminReservationsCalendarTests {
+		req, _ := http.NewRequest("GET", e.url, nil)
+		ctx := getCtx(req)
+		req = req.WithContext(ctx)
+		req.RequestURI = e.url
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		rr := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(Repo.AdminReservationsCalendar)
+		handler.ServeHTTP(rr, req)
+
+		if rr.Code != e.expectedStatusCode {
+			t.Errorf("failed %s: expected code %d, but got %d", e.name, e.expectedStatusCode, rr.Code)
 		}
 
 		if e.expectedHTML != "" {
