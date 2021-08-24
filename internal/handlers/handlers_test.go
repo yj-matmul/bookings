@@ -526,30 +526,46 @@ func TestRepository_ChooseRoom(t *testing.T) {
 	}
 }
 
+var bookRoomTests = []struct {
+	name               string
+	url                string
+	expectedStatusCode int
+	expectedLocation   string
+}{
+	{
+		name:               "valid-url-book-room",
+		url:                "/book-room?s=2050-01-02&e=2050-01-03&id=1",
+		expectedStatusCode: http.StatusSeeOther, expectedLocation: "/make-reservation",
+	},
+	{
+		name:               "invalid-room-id-book-room",
+		url:                "/book-room?s=2050-01-02&e=2050-01-03&id=100000",
+		expectedStatusCode: http.StatusSeeOther, expectedLocation: "/",
+	},
+}
+
 func TestRepository_BookRoom(t *testing.T) {
-	req, _ := http.NewRequest("GET",
-		"/book-room?s=2050-01-02&e=2050-01-03&id=1", nil)
-	ctx := getCtx(req)
-	req = req.WithContext(ctx)
-	rr := httptest.NewRecorder()
+	for _, e := range bookRoomTests {
+		req, _ := http.NewRequest("GET", e.url, nil)
+		ctx := getCtx(req)
+		req = req.WithContext(ctx)
+		req.RequestURI = e.url
 
-	handler := http.HandlerFunc(Repo.BookRoom)
+		rr := httptest.NewRecorder()
 
-	handler.ServeHTTP(rr, req)
-	if rr.Code != http.StatusSeeOther {
-		t.Errorf("BookRoom handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusSeeOther)
-	}
+		handler := http.HandlerFunc(Repo.BookRoom)
+		handler.ServeHTTP(rr, req)
 
-	// test case that has invalid room id
-	req, _ = http.NewRequest("GET",
-		"/book-room?s=2050-01-02&e=2050-01-03&id=10000", nil)
-	ctx = getCtx(req)
-	req = req.WithContext(ctx)
-	rr = httptest.NewRecorder()
+		if e.expectedStatusCode != rr.Code {
+			t.Errorf("%s returned wrong response code: got %d, wanted %d", e.name, rr.Code, e.expectedStatusCode)
+		}
 
-	handler.ServeHTTP(rr, req)
-	if rr.Code != http.StatusSeeOther {
-		t.Errorf("BookRoom handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusSeeOther)
+		if e.expectedLocation != "" {
+			actualLoc, _ := rr.Result().Location()
+			if actualLoc.String() != e.expectedLocation {
+				t.Errorf("failed %s: expected loaction %s, but got %s", e.name, e.expectedLocation, actualLoc.String())
+			}
+		}
 	}
 }
 
