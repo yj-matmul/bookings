@@ -40,12 +40,15 @@ func (m *testDBRepo) SearchAvailabilityByDatesByRoomID(start, end time.Time, roo
 // SearchAvailabilityForAllRooms returns a slice of available rooms, if any, for given date range
 func (m *testDBRepo) SearchAvailabilityForAllRooms(start, end time.Time) ([]models.Room, error) {
 	var rooms []models.Room
+	layout := "2006-01-02"
+	test_start, _ := time.Parse(layout, "2021-08-11")
+	test_end, _ := time.Parse(layout, "2021-08-12")
 
 	if start.After(end) {
 		return rooms, errors.New("some error")
 	}
 
-	if start.Equal(end) {
+	if start.Equal(test_start) && end.Equal(test_end) {
 		return rooms, nil
 	}
 
