@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -10,6 +11,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/yj-matmul/bookings/internal/driver"
 	"github.com/yj-matmul/bookings/internal/models"
@@ -816,6 +818,86 @@ func TestAdminDeleteReservation(t *testing.T) {
 		rr := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(Repo.AdminDeleteReservation)
+		handler.ServeHTTP(rr, req)
+
+		if rr.Code != e.expectedStatusCode {
+			t.Errorf("failed %s: expected code %d, but got %d", e.name, e.expectedStatusCode, rr.Code)
+		}
+
+		if e.expectedLocation != "" {
+			actualLoc, _ := rr.Result().Location()
+			if actualLoc.String() != e.expectedLocation {
+				t.Errorf("failed %s: expected location %s, but got %s", e.name, e.expectedLocation, actualLoc.String())
+			}
+		}
+	}
+}
+
+var adminPostReservationTests = []struct {
+	name               string
+	postedData         url.Values
+	existBlock         int
+	expectedStatusCode int
+	expectedLocation   string
+}{
+	{
+		name: "exist-block-admin-post-res",
+		postedData: url.Values{
+			"y": {time.Now().Format("2006")},
+			"m": {time.Now().Format("01")},
+			fmt.Sprintf("add_block_1_%s", time.Now().Format("2006-01-2")): {"1"},
+		},
+		existBlock: 1, expectedStatusCode: http.StatusSeeOther,
+	},
+	{
+		name: "no-exist-block-admin-post-res",
+		postedData: url.Values{
+			"y": {time.Now().Format("2006")},
+			"m": {time.Now().Format("01")},
+			fmt.Sprintf("add_block_1_%s", time.Now().Format("2006-01-2")): {"1"},
+		},
+		existBlock: 0, expectedStatusCode: http.StatusSeeOther,
+	},
+}
+
+func TestAdminPostReservationsCalendar(t *testing.T) {
+	for _, e := range adminPostReservationTests {
+		var req *http.Request
+		if e.postedData != nil {
+			req, _ = http.NewRequest("POST", "/admin/reservations-calendar", strings.NewReader(e.postedData.Encode()))
+		} else {
+			req, _ = http.NewRequest("POST", "/admin/reservations-calendar", nil)
+		}
+		ctx := getCtx(req)
+		req = req.WithContext(ctx)
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		blockMap := make(map[string]int)
+		now := time.Now()
+
+		year, month, day := now.Date()
+		location := now.Location()
+
+		curDate := time.Date(year, month, day, 0, 0, 0, 0, location)
+		firstOfMonth := time.Date(year, month, 1, 0, 0, 0, 0, location)
+		lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+
+		for d := firstOfMonth; !d.After(lastOfMonth); d = d.AddDate(0, 0, 1) {
+			blockMap[d.Format("2006-01-2")] = 0
+		}
+
+		if e.existBlock > 0 {
+			if firstOfMonth.Equal(curDate) {
+				blockMap[firstOfMonth.AddDate(0, 0, 1).Format("2006-01-2")] = e.existBlock
+			} else {
+				blockMap[firstOfMonth.Format("2006-01-2")] = e.existBlock
+			}
+		}
+
+		session.Put(ctx, "block_map_1", blockMap)
+
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(Repo.AdminPostReservationsCalendar)
 		handler.ServeHTTP(rr, req)
 
 		if rr.Code != e.expectedStatusCode {
