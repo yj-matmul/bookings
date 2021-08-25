@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/yj-matmul/bookings/internal/config"
 	"github.com/yj-matmul/bookings/internal/driver"
 	"github.com/yj-matmul/bookings/internal/forms"
@@ -724,8 +723,14 @@ func (m *Repository) AdminProcessReservation(w http.ResponseWriter, r *http.Requ
 
 // AdminDeleteReservation deletes a reservation
 func (m *Repository) AdminDeleteReservation(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
-	src := chi.URLParam(r, "src")
+	// use chi's method
+	// id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	// src := chi.URLParam(r, "src")
+
+	// without chi's method
+	exploded := strings.Split(r.RequestURI, "/")
+	id, _ := strconv.Atoi(exploded[4])
+	src := exploded[3]
 	err := m.DB.DeleteReservation(id)
 	if err != nil {
 		helpers.ServerError(w, err)

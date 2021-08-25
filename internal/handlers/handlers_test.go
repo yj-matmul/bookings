@@ -778,6 +778,59 @@ func TestAdminProcessReservation(t *testing.T) {
 	}
 }
 
+var adminDeleteReservationTests = []struct {
+	name               string
+	url                string
+	expectedStatusCode int
+	expectedLocation   string
+}{
+	{
+		name:               "res-new-without-year-admin-process-res",
+		url:                "/admin/delete-reservation/new/1/do",
+		expectedStatusCode: http.StatusSeeOther, expectedLocation: "/admin/reservations-new",
+	},
+	{
+		name:               "res-all-without-year-admin-process-res",
+		url:                "/admin/delete-reservation/all/1/do",
+		expectedStatusCode: http.StatusSeeOther, expectedLocation: "/admin/reservations-all",
+	},
+	{
+		name:               "res-cal-without-year-admin-process-res",
+		url:                "/admin/delete-reservation/cal/1/do",
+		expectedStatusCode: http.StatusSeeOther, expectedLocation: "/admin/reservations-cal",
+	},
+	{
+		name:               "res-cal-with-year-admin-process-res",
+		url:                "/admin/delete-reservation/cal/1/do?y=2050&m=01",
+		expectedStatusCode: http.StatusSeeOther, expectedLocation: "/admin/reservations-calendar?y=2050&m=01",
+	},
+}
+
+func TestAdminDeleteReservation(t *testing.T) {
+	for _, e := range adminDeleteReservationTests {
+		req, _ := http.NewRequest("GET", e.url, nil)
+		ctx := getCtx(req)
+		req = req.WithContext(ctx)
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req.RequestURI = e.url
+		rr := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(Repo.AdminDeleteReservation)
+		handler.ServeHTTP(rr, req)
+
+		if rr.Code != e.expectedStatusCode {
+			t.Errorf("failed %s: expected code %d, but got %d", e.name, e.expectedStatusCode, rr.Code)
+		}
+
+		if e.expectedLocation != "" {
+			actualLoc, _ := rr.Result().Location()
+			if actualLoc.String() != e.expectedLocation {
+				t.Errorf("failed %s: expected location %s, but got %s", e.name, e.expectedLocation, actualLoc.String())
+			}
+		}
+	}
+}
+
 func getCtx(req *http.Request) context.Context {
 	ctx, err := session.Load(req.Context(), req.Header.Get("X-Session"))
 	if err != nil {
