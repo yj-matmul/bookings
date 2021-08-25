@@ -701,8 +701,14 @@ func (m *Repository) AdminReservationsCalendar(w http.ResponseWriter, r *http.Re
 
 // AdminProcessReservation marks a reservation as processed
 func (m *Repository) AdminProcessReservation(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
-	src := chi.URLParam(r, "src")
+	// use chi's method
+	// id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	// src := chi.URLParam(r, "src")
+
+	// without chi's method
+	exploded := strings.Split(r.RequestURI, "/")
+	id, _ := strconv.Atoi(exploded[4])
+	src := exploded[3]
 	_ = m.DB.UpdateProcessedForReservation(id, 1)
 
 	year := r.URL.Query().Get("y")
