@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/gob"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -27,9 +28,9 @@ var dbInfoPath string
 
 // main is the main application function
 func main() {
-	dbInfoPath = "./static/db_info.txt"
-	dsn := loadDsn(dbInfoPath)
-	db, err := run(dsn)
+	// dbInfoPath = "./static/db_info.txt"
+	// dsn := loadDsn(dbInfoPath)
+	db, err := run()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -50,7 +51,7 @@ func main() {
 	log.Fatal(err)
 }
 
-func run(dsn string) (*driver.DB, error) {
+func run() (*driver.DB, error) {
 	// what am I going to put in the session
 	gob.Register(models.Reservation{})
 	gob.Register(models.User{})
@@ -58,12 +59,29 @@ func run(dsn string) (*driver.DB, error) {
 	gob.Register(models.Restriction{})
 	gob.Register(map[string]int{})
 
+	// parsing flags
+	inProduction := flag.Bool("production", true, "application is in production")
+	useCache := flag.Bool("cache", true, "use tempalte cache")
+	dbHost := flag.String("dbhost", "localhost", "database host")
+	dbName := flag.String("dbname", "", "database name")
+	dbUser := flag.String("dbuser", "", "database user")
+	dbPassword := flag.String("dbpassword", "", "database password")
+	dbPort := flag.String("dbport", "5001", "database port")
+	dbSSL := flag.String("dbssl", "disable", "database ssl settings (disable, prefer, require")
+
+	flag.Parse()
+
+	if *dbName == "" || *dbUser == "" {
+		log.Println("Missing required flags")
+		os.Exit(1)
+	}
+
 	mailChan := make(chan models.MailData)
 	app.MailChan = mailChan
 
 	// change this to true when in production
-	app.InProduction = false
-	app.UseCache = false
+	app.InProduction = *inProduction
+	app.UseCache = *useCache
 
 	infoLog = log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	app.InfoLog = infoLog
@@ -81,7 +99,9 @@ func run(dsn string) (*driver.DB, error) {
 
 	// connect to database
 	log.Println("connect to database...")
-	db, err := driver.ConnectSQL(dsn)
+	connectionString := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=%s",
+		*dbHost, *dbPort, *dbName, *dbUser, *dbPassword, *dbSSL)
+	db, err := driver.ConnectSQL(connectionString)
 	if err != nil {
 		log.Fatal("Cannot connect to database! Dying...")
 	}
