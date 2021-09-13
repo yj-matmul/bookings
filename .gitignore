@@ -6,7 +6,6 @@ run.bat
 *.txt
 coverage.out
 *.zip
-*users_table*.sql
 other_source/*
 key/
 *.ppk
