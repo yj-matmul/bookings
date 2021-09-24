@@ -275,7 +275,7 @@ func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-
+	fmt.Println("1")
 	start := r.Form.Get("start")
 	end := r.Form.Get("end")
 
@@ -300,13 +300,13 @@ func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-
+	fmt.Println("2")
 	if len(rooms) == 0 {
 		m.App.Session.Put(r.Context(), "error", "No Availability")
 		http.Redirect(w, r, "/search-availability", http.StatusSeeOther)
 		return
 	}
-
+	fmt.Println("3")
 	data := make(map[string]interface{})
 	data["rooms"] = rooms
 
@@ -316,10 +316,11 @@ func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 	}
 
 	m.App.Session.Put(r.Context(), "reservation", res)
-
+	fmt.Println("4")
 	render.Template(w, r, "choose-room.page.html", &models.TemplateData{
 		Data: data,
 	})
+	fmt.Println("5")
 }
 
 type jsonResponse struct {
