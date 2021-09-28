@@ -84,7 +84,6 @@ func run() (*driver.DB, error) {
 	app.UseCache = *useCache
 
 	// infoLog = log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
-	// config.CustomLogger()
 	infoLog = config.CustomLogger()
 	app.InfoLog = infoLog
 
