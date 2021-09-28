@@ -51,17 +51,19 @@ func NewHandlers(r *Repository) {
 
 // Home is the home page handler
 func (m *Repository) Home(w http.ResponseWriter, r *http.Request) {
+	m.App.InfoLog.Print("Home")
 	render.Template(w, r, "home.page.html", &models.TemplateData{})
 }
 
 // About is the about page handler
 func (m *Repository) About(w http.ResponseWriter, r *http.Request) {
-	// send the data to the templates
+	m.App.InfoLog.Print("About")
 	render.Template(w, r, "about.page.html", &models.TemplateData{})
 }
 
 // Reservation renders the make a reservation page and displays form
 func (m *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
+	m.App.InfoLog.Print("Reservation")
 	res, ok := m.App.Session.Get(r.Context(), "reservation").(models.Reservation)
 	if !ok {
 		m.App.Session.Put(r.Context(), "error", "can't get reservation from session")
@@ -99,6 +101,7 @@ func (m *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
 
 // PostReservation handles the posting of a reservation form
 func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
+	m.App.InfoLog.Print("PostReservation")
 	err := r.ParseForm()
 	if err != nil {
 		m.App.Session.Put(r.Context(), "error", "can't parse form!")
@@ -229,6 +232,7 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 
 // ReservationSummary displays the reservation summary page
 func (m *Repository) ReservationSummary(w http.ResponseWriter, r *http.Request) {
+	m.App.InfoLog.Print("ReservationSummary")
 	reservation, ok := m.App.Session.Get(r.Context(), "reservation").(models.Reservation)
 	if !ok {
 		m.App.Session.Put(r.Context(), "error", "Can't get reservation from session")
@@ -254,29 +258,32 @@ func (m *Repository) ReservationSummary(w http.ResponseWriter, r *http.Request) 
 
 // Generals renders the room page
 func (m *Repository) Generals(w http.ResponseWriter, r *http.Request) {
+	m.App.InfoLog.Print("Generals")
 	render.Template(w, r, "generals.page.html", &models.TemplateData{})
 }
 
 // Majors renders the room page
 func (m *Repository) Majors(w http.ResponseWriter, r *http.Request) {
+	m.App.InfoLog.Print("Majors")
 	render.Template(w, r, "majors.page.html", &models.TemplateData{})
 }
 
 // Availability renders the search availability page
 func (m *Repository) Availability(w http.ResponseWriter, r *http.Request) {
-	m.App.InfoLog.Println("Availability")
+	m.App.InfoLog.Print("Availability")
 	render.Template(w, r, "search-availability.page.html", &models.TemplateData{})
 }
 
 // PostAvailability renders the search availability page
 func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
+	m.App.InfoLog.Print("PostAvailability")
 	err := r.ParseForm()
 	if err != nil {
 		m.App.Session.Put(r.Context(), "error", "can't parse form!")
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-	log.Println("1")
+	m.App.InfoLog.Print("PostAvailability 1")
 	start := r.Form.Get("start")
 	end := r.Form.Get("end")
 
@@ -287,7 +294,7 @@ func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-
+	m.App.InfoLog.Print("PostAvailability 2")
 	endDate, err := time.Parse(layout, end)
 	if err != nil {
 		m.App.Session.Put(r.Context(), "error", "can't parse end date!")
@@ -301,13 +308,13 @@ func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-	log.Println("2")
+	m.App.InfoLog.Print("PostAvailability 3")
 	if len(rooms) == 0 {
 		m.App.Session.Put(r.Context(), "error", "No Availability")
 		http.Redirect(w, r, "/search-availability", http.StatusSeeOther)
 		return
 	}
-	log.Println("3")
+	m.App.InfoLog.Print("PostAvailability 4")
 	data := make(map[string]interface{})
 	data["rooms"] = rooms
 
@@ -317,11 +324,11 @@ func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 	}
 
 	m.App.Session.Put(r.Context(), "reservation", res)
-	log.Println("4")
+	m.App.InfoLog.Print("PostAvailability 5")
 	render.Template(w, r, "choose-room.page.html", &models.TemplateData{
 		Data: data,
 	})
-	log.Println("5")
+	m.App.InfoLog.Print("PostAvailability 6")
 }
 
 type jsonResponse struct {
@@ -334,6 +341,7 @@ type jsonResponse struct {
 
 // AvailabilityJSON handles request for availability and send JSON response
 func (m *Repository) AvailabilityJSON(w http.ResponseWriter, r *http.Request) {
+	m.App.InfoLog.Print("AvailabilityJSON")
 	err := r.ParseForm()
 	if err != nil {
 		resp := jsonResponse{
@@ -386,11 +394,13 @@ func (m *Repository) AvailabilityJSON(w http.ResponseWriter, r *http.Request) {
 
 // Majors renders the room page
 func (m *Repository) Contact(w http.ResponseWriter, r *http.Request) {
+	m.App.InfoLog.Print("Contact")
 	render.Template(w, r, "contact.page.html", &models.TemplateData{})
 }
 
 // ChooseRoom displays list of available rooms
 func (m *Repository) ChooseRoom(w http.ResponseWriter, r *http.Request) {
+	m.App.InfoLog.Print("ChooseRoom")
 	// roomID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	exploded := strings.Split(r.RequestURI, "/")
 	roomID, err := strconv.Atoi(exploded[2])
@@ -417,6 +427,7 @@ func (m *Repository) ChooseRoom(w http.ResponseWriter, r *http.Request) {
 
 // BookRoom takes URL parameters, builds a session variable, and takes user to make res screen
 func (m *Repository) BookRoom(w http.ResponseWriter, r *http.Request) {
+	m.App.InfoLog.Print("BookRoom")
 	roomID, _ := strconv.Atoi(r.URL.Query().Get("id"))
 	sd := r.URL.Query().Get("s")
 	ed := r.URL.Query().Get("e")
@@ -446,6 +457,7 @@ func (m *Repository) BookRoom(w http.ResponseWriter, r *http.Request) {
 
 // ShowLogin shows the login screen
 func (m *Repository) ShowLogin(w http.ResponseWriter, r *http.Request) {
+	m.App.InfoLog.Print("ShowLogin")
 	render.Template(w, r, "login.page.html", &models.TemplateData{
 		Form: forms.New(nil),
 	})
@@ -453,6 +465,7 @@ func (m *Repository) ShowLogin(w http.ResponseWriter, r *http.Request) {
 
 // PostShowLogin handles logging the user in
 func (m *Repository) PostShowLogin(w http.ResponseWriter, r *http.Request) {
+	m.App.InfoLog.Print("PostShowLogin")
 	_ = m.App.Session.RenewToken(r.Context())
 
 	err := r.ParseForm()
@@ -488,6 +501,7 @@ func (m *Repository) PostShowLogin(w http.ResponseWriter, r *http.Request) {
 
 // Logout logs a user out
 func (m *Repository) Logout(w http.ResponseWriter, r *http.Request) {
+	m.App.InfoLog.Print("Logout")
 	_ = m.App.Session.Destroy(r.Context())
 	_ = m.App.Session.RenewToken(r.Context())
 
@@ -496,11 +510,13 @@ func (m *Repository) Logout(w http.ResponseWriter, r *http.Request) {
 
 //
 func (m *Repository) AdminDashboard(w http.ResponseWriter, r *http.Request) {
+	m.App.InfoLog.Print("AdminDashboard")
 	render.Template(w, r, "admin-dashboard.page.html", &models.TemplateData{})
 }
 
 // AdminNewReservations shows all new reservations in admin tool
 func (m *Repository) AdminNewReservations(w http.ResponseWriter, r *http.Request) {
+	m.App.InfoLog.Print("AdminNewReservations")
 	reservations, err := m.DB.AllNewReservations()
 	if err != nil {
 		helpers.ServerError(w, err)
@@ -517,6 +533,7 @@ func (m *Repository) AdminNewReservations(w http.ResponseWriter, r *http.Request
 
 // AdminAllReservations shows all reservations in admin tool
 func (m *Repository) AdminAllReservations(w http.ResponseWriter, r *http.Request) {
+	m.App.InfoLog.Print("AdminAllReservations")
 	reservations, err := m.DB.AllReservations()
 	if err != nil {
 		helpers.ServerError(w, err)
@@ -533,6 +550,7 @@ func (m *Repository) AdminAllReservations(w http.ResponseWriter, r *http.Request
 
 // AdminShowReservation shows the reservation in the admin tool
 func (m *Repository) AdminShowReservation(w http.ResponseWriter, r *http.Request) {
+	m.App.InfoLog.Print("AdminShowReservation")
 	exploded := strings.Split(r.RequestURI, "/")
 
 	src := exploded[3]
@@ -572,6 +590,7 @@ func (m *Repository) AdminShowReservation(w http.ResponseWriter, r *http.Request
 
 // AdminPostShowReservation shows the reservation in the admin tool
 func (m *Repository) AdminPostShowReservation(w http.ResponseWriter, r *http.Request) {
+	m.App.InfoLog.Print("AdminPostShowReservation")
 	err := r.ParseForm()
 	if err != nil {
 		helpers.ServerError(w, err)
@@ -619,6 +638,7 @@ func (m *Repository) AdminPostShowReservation(w http.ResponseWriter, r *http.Req
 
 // AdminReservationsCalendar displays the reservation calendar
 func (m *Repository) AdminReservationsCalendar(w http.ResponseWriter, r *http.Request) {
+	m.App.InfoLog.Print("AdminReservationsCalendar")
 	// assume that there is no month/year specified
 	now := time.Now()
 
@@ -702,6 +722,7 @@ func (m *Repository) AdminReservationsCalendar(w http.ResponseWriter, r *http.Re
 
 // AdminProcessReservation marks a reservation as processed
 func (m *Repository) AdminProcessReservation(w http.ResponseWriter, r *http.Request) {
+	m.App.InfoLog.Print("AdminProcessReservation")
 	// use chi's method
 	// id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	// src := chi.URLParam(r, "src")
@@ -725,6 +746,7 @@ func (m *Repository) AdminProcessReservation(w http.ResponseWriter, r *http.Requ
 
 // AdminDeleteReservation deletes a reservation
 func (m *Repository) AdminDeleteReservation(w http.ResponseWriter, r *http.Request) {
+	m.App.InfoLog.Print("AdminDeleteReservation")
 	// use chi's method
 	// id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	// src := chi.URLParam(r, "src")
@@ -752,6 +774,7 @@ func (m *Repository) AdminDeleteReservation(w http.ResponseWriter, r *http.Reque
 
 // AdminPostReservationsCalendar handles post of reservation calendar
 func (m *Repository) AdminPostReservationsCalendar(w http.ResponseWriter, r *http.Request) {
+	m.App.InfoLog.Print("AdminPostReservationsCalendar")
 	err := r.ParseForm()
 	if err != nil {
 		helpers.ServerError(w, err)
