@@ -264,7 +264,7 @@ func (m *Repository) Majors(w http.ResponseWriter, r *http.Request) {
 
 // Availability renders the search availability page
 func (m *Repository) Availability(w http.ResponseWriter, r *http.Request) {
-	log.Println("GET Availability")
+	m.App.InfoLog.Println("Availability")
 	render.Template(w, r, "search-availability.page.html", &models.TemplateData{})
 }
 

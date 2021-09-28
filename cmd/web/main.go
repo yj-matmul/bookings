@@ -83,7 +83,9 @@ func run() (*driver.DB, error) {
 	app.InProduction = *inProduction
 	app.UseCache = *useCache
 
-	infoLog = log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	// infoLog = log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	// config.CustomLogger()
+	infoLog = config.CustomLogger()
 	app.InfoLog = infoLog
 
 	errorLog = log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
@@ -98,14 +100,15 @@ func run() (*driver.DB, error) {
 	app.Session = session
 
 	// connect to database
-	log.Println("connect to database...")
+	app.InfoLog.Println("connect to database...")
+	config.TestWrite("a\n")
 	connectionString := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=%s",
 		*dbHost, *dbPort, *dbName, *dbUser, *dbPassword, *dbSSL)
 	db, err := driver.ConnectSQL(connectionString)
 	if err != nil {
 		log.Fatal("Cannot connect to database! Dying...")
 	}
-	log.Println("connect to database!")
+	app.InfoLog.Println("connect to database!")
 
 	// create template cache
 	tc, err := render.CreateTemplateCache()
