@@ -283,7 +283,7 @@ func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-	m.App.InfoLog.Print("PostAvailability 1")
+
 	start := r.Form.Get("start")
 	end := r.Form.Get("end")
 
@@ -294,7 +294,7 @@ func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-	m.App.InfoLog.Print("PostAvailability 2")
+
 	endDate, err := time.Parse(layout, end)
 	if err != nil {
 		m.App.Session.Put(r.Context(), "error", "can't parse end date!")
@@ -308,13 +308,13 @@ func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-	m.App.InfoLog.Print("PostAvailability 3")
+
 	if len(rooms) == 0 {
 		m.App.Session.Put(r.Context(), "error", "No Availability")
 		http.Redirect(w, r, "/search-availability", http.StatusSeeOther)
 		return
 	}
-	m.App.InfoLog.Print("PostAvailability 4")
+
 	data := make(map[string]interface{})
 	data["rooms"] = rooms
 
@@ -324,11 +324,10 @@ func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 	}
 
 	m.App.Session.Put(r.Context(), "reservation", res)
-	m.App.InfoLog.Print("PostAvailability 5")
+
 	render.Template(w, r, "choose-room.page.html", &models.TemplateData{
 		Data: data,
 	})
-	m.App.InfoLog.Print("PostAvailability 6")
 }
 
 type jsonResponse struct {
