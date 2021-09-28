@@ -9,3 +9,4 @@ coverage.out
 other_source/*
 key/
 *.ppk
+bookings
