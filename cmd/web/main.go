@@ -24,12 +24,19 @@ var app config.AppConfig
 var session *scs.SessionManager
 var infoLog *log.Logger
 var errorLog *log.Logger
+var logFile *os.File
 var dbInfoPath string
 
 // main is the main application function
 func main() {
 	// dbInfoPath = "./static/db_info.txt"
 	// dsn := loadDsn(dbInfoPath)
+
+	// infoLog = log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	infoLog, logFile = config.CustomLogger()
+	app.InfoLog = infoLog
+	defer logFile.Close()
+
 	db, err := run()
 	if err != nil {
 		log.Fatal(err)
@@ -83,10 +90,6 @@ func run() (*driver.DB, error) {
 	app.InProduction = *inProduction
 	app.UseCache = *useCache
 
-	// infoLog = log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
-	infoLog = config.CustomLogger()
-	app.InfoLog = infoLog
-
 	errorLog = log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 	app.ErrorLog = errorLog
 
@@ -100,7 +103,6 @@ func run() (*driver.DB, error) {
 
 	// connect to database
 	app.InfoLog.Println("connect to database...")
-	config.TestWrite("a\n")
 	connectionString := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=%s",
 		*dbHost, *dbPort, *dbName, *dbUser, *dbPassword, *dbSSL)
 	db, err := driver.ConnectSQL(connectionString)
