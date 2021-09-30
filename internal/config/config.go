@@ -30,8 +30,6 @@ func CustomLogger() (*log.Logger, *os.File) {
 
 	multiWriter := io.MultiWriter(os.Stdout, logFile)
 	logger := log.New(multiWriter, "[INFO] ", log.LstdFlags|log.Lshortfile)
-	// Logger = log.New(logFile, "[INFO] ", log.LstdFlags|log.Lshortfile)
-	logger.Print("End of Program")
 
 	return logger, logFile
 }

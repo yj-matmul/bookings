@@ -32,7 +32,6 @@ func main() {
 	// dbInfoPath = "./static/db_info.txt"
 	// dsn := loadDsn(dbInfoPath)
 
-	// infoLog = log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	infoLog, logFile = config.CustomLogger()
 	app.InfoLog = infoLog
 	defer logFile.Close()
@@ -128,6 +127,7 @@ func run() (*driver.DB, error) {
 	return db, nil
 }
 
+// loadDsn loads DB info from hidden file (not used)
 func loadDsn(path string) string {
 	// loading password of DB
 	var password string
