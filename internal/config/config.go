@@ -22,14 +22,14 @@ type AppConfig struct {
 }
 
 // CustomLogger wirtes log to txt file and os standard out
-func CustomLogger() (*log.Logger, *os.File) {
-	logFile, err := os.OpenFile("log.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0755)
+func CustomLogger(logPath string, prefix string) (*log.Logger, *os.File) {
+	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0755)
 	if err != nil {
 		panic(err)
 	}
 
 	multiWriter := io.MultiWriter(os.Stdout, logFile)
-	logger := log.New(multiWriter, "[INFO] ", log.LstdFlags|log.Lshortfile)
+	logger := log.New(multiWriter, prefix, log.LstdFlags|log.Lshortfile)
 
 	return logger, logFile
 }

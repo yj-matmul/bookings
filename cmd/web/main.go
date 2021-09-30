@@ -19,11 +19,12 @@ import (
 )
 
 const portNumber = ":8080"
+const logPath = "./logs/application_log.txt"
+const logPrefix = "[INFO] "
 
 var app config.AppConfig
 var session *scs.SessionManager
 var infoLog *log.Logger
-var errorLog *log.Logger
 var logFile *os.File
 var dbInfoPath string
 
@@ -32,7 +33,7 @@ func main() {
 	// dbInfoPath = "./static/db_info.txt"
 	// dsn := loadDsn(dbInfoPath)
 
-	infoLog, logFile = config.CustomLogger()
+	infoLog, logFile = config.CustomLogger(logPath, logPrefix)
 	app.InfoLog = infoLog
 	defer logFile.Close()
 
@@ -89,15 +90,11 @@ func run() (*driver.DB, error) {
 	app.InProduction = *inProduction
 	app.UseCache = *useCache
 
-	errorLog = log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
-	app.ErrorLog = errorLog
-
 	session = scs.New()
 	session.Lifetime = 24 * time.Hour // session의 유지 시간
 	session.Cookie.Persist = true     // user가 browser를 종료해도 session을 유지한다는 option
 	session.Cookie.SameSite = http.SameSiteLaxMode
 	session.Cookie.Secure = app.InProduction // true uses https, false uses http
-
 	app.Session = session
 
 	// connect to database

@@ -30,7 +30,7 @@ func sendMsg(m models.MailData) {
 
 	client, err := server.Connect()
 	if err != nil {
-		errorLog.Println(err)
+		infoLog.Println(err)
 	}
 
 	email := mail.NewMSG()

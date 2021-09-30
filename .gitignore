@@ -10,4 +10,5 @@ other_source/*
 key/
 *.ppk
 bookings
+logs/*
 
