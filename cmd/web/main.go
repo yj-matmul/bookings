@@ -19,7 +19,6 @@ import (
 )
 
 const portNumber = ":8080"
-const logPath = "./logs/application_log.txt"
 const logPrefix = "[INFO] "
 
 var app config.AppConfig
@@ -33,16 +32,12 @@ func main() {
 	// dbInfoPath = "./static/db_info.txt"
 	// dsn := loadDsn(dbInfoPath)
 
-	infoLog, logFile = config.CustomLogger(logPath, logPrefix)
-	app.InfoLog = infoLog
-	defer logFile.Close()
-
 	db, err := run()
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.SQL.Close()
-
+	defer logFile.Close()
 	defer close(app.MailChan)
 
 	fmt.Println("Starting mail listener...")
@@ -75,13 +70,17 @@ func run() (*driver.DB, error) {
 	dbPassword := flag.String("dbpassword", "", "database password")
 	dbPort := flag.String("dbport", "5001", "database port")
 	dbSSL := flag.String("dbssl", "disable", "database ssl settings (disable, prefer, require")
+	logPath := flag.String("logpath", "", "set application log file path")
 
 	flag.Parse()
 
-	if *dbName == "" || *dbUser == "" {
+	if *dbName == "" || *dbUser == "" || *logPath == "" {
 		log.Println("Missing required flags")
 		os.Exit(1)
 	}
+
+	infoLog, logFile = config.CustomLogger(*logPath, logPrefix)
+	app.InfoLog = infoLog
 
 	mailChan := make(chan models.MailData)
 	app.MailChan = mailChan
