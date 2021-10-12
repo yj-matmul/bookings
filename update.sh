@@ -4,4 +4,4 @@ git pull
 
 soda migrate
 
-. run.sh
+go build -o bookings cmd/web/*.go

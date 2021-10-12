@@ -1,4 +1,3 @@
 #!/bin/bash
 
-go build -o bookings cmd/web/*.go
-./bookings -dbname=bookings -dbuser=postgres -dbpassword= -production=false -cache=false
+app/bookings/bookings -dbname=bookings -dbuser=postgres -dbpassword= -production=false -cache=false -logpath=/app/bookings/logs/application_log.txt
